@@ -1,6 +1,6 @@
 import os
 os.system("title Jimbo Hotel Flask")
-
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import json
 from concurrent.futures import ThreadPoolExecutor, wait
 # from app_crawl.helpers import convert_to_tooman
@@ -312,7 +312,7 @@ class Jimbo:
 
             headers = {'Cookie': cookies_string}
             req = requests.get(self.url, headers=headers)
-            influx.capture_logs(1, 'Jimboo')
+            # influx.capture_logs(1, 'Jimboo')
 
             if req.status_code != 200:
                 print(f'Jimbo Error Cookie --- Status_Code: {req.status_code}')
@@ -346,7 +346,7 @@ class Jimbo:
         }
 
         req = requests.post(url, json=body, headers=headers)
-        influx.capture_logs(1, 'Jimboo')
+        # influx.capture_logs(1, 'Jimboo')
 
         if req.status_code != 200:
             self.get_data()
@@ -380,7 +380,7 @@ class Jimbo:
         }
 
         req = requests.post(url, json=body, headers=self.header)
-        influx.capture_logs(1, 'Jimboo')
+        # influx.capture_logs(1, 'Jimboo')
 
 
         if req.status_code == 200:
@@ -412,6 +412,42 @@ class Jimbo:
             return None
 
     def get_result(self):
+        try:
+            data = self.get_data()
+            if not data.get('isSucceed', False):
+                return {'status': False, 'data': [], 'message': "داده ای یافت نشد"}
+        except Exception as e:
+            print(f"Error fetching data: {e}")  # Debugging
+            return {'status': False, "data": [], 'message': "اتمام زمان"}
+
+        hotels = data['model'].get('hotelBookingItineraries', [])
+
+        def hotel_handler(hotel):
+            try:
+                return {
+                    "hotel_name": hotel['hotel']['title'],
+                    "hotel_star": hotel['hotel']['rating'],
+                    "min_price": convert_to_tooman(hotel['bestPackage']['totalPrice']),
+                    "provider": "Jimboo",
+                    "rooms": self.get_room_data(hotel)
+                }
+            except Exception as e:
+                print(f"Error processing hotel: {e}")  # Debugging
+                return None  # Return None to avoid breaking the loop
+
+        result = []
+        with ThreadPoolExecutor(max_workers=100) as executor:
+            future_to_hotel = {executor.submit(hotel_handler, hotel): hotel for hotel in hotels}
+
+            for future in as_completed(future_to_hotel):
+                hotel_data = future.result()
+                if hotel_data:  # Ignore None values from failed executions
+                    result.append(hotel_data)
+
+        return result
+
+
+    def get_result_old(self):
         try:
             data = self.get_data()
             if not data['isSucceed']:
