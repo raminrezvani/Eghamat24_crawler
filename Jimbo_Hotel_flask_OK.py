@@ -504,11 +504,12 @@ def Jimbo_hotels():
     # Optionally, you can return a response immediately
     return jsonify(result)
 
-
+import sys
 if __name__ == '__main__':
+    port=int(sys.argv[1]) # Get port from command line
     # app.run(debug=True,host='0.0.0.0',port=5001)
-    app.run(host='0.0.0.0',port=5020)
-
+    # app.run(host='0.0.0.0',port=5020)
+    app.run(host='0.0.0.0',port=port)
 
 
 # result = get_booking_tours("2024-08-15", 3)
