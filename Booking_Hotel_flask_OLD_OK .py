@@ -7,7 +7,6 @@ from concurrent.futures import ThreadPoolExecutor, wait
 from requests import request
 import urllib3
 import  requests
-from Client_Dispatch_requests import executeRequest
 import time
 import os
 from selenium import webdriver
@@ -161,36 +160,27 @@ def get_authorization():
         'g-recaptcha-response':'03AFcWeA7MtvAispnmY6sIcjIwpxRDN2H5yw3kmtaObON4gwgFXT33l8IiGZYjyJPXvweoyJXQXKYtiGs6yMnxMiER_9LVY5l4nVi9lnQ2AL-ceng5uBiii3SFe4gHbpY9DqMyg5odbRPjo8jwKNOFbWSoA8Xncp5ATZ7ODcKQU2jlfO59GfgGPf3BsWqLB9GD4psVeMIu8yVAQhWC03o09duF8_zBSHAMoHmmcQkUS9YSfEAknI5oRBeGeICEoRSYXzQgUP3kdwhSxJpL6Aendwlp1lydG6BHQnK_5RVhAd6w76tBJxYtGMOQknXN3DhnYgMEcadAIx2J7d57kpk9iPhkLYOXNzfKMUFVNmcHwpI-vJ01_MkSUeDbYRe0W7dA5MQ9e-tOxrgNQph_WpBZiRmQpOLbRM4gA97-OPVhSJ0azK4y505_dWpeMLfkoUMcRdRJVE9o78pzgi-oNmJfMHxyfcfUvHfSE6_lZl5zM7_N16s_0wQsMh_k_SOTNGW4KzSGFFxr_PL2A57DdJ9WAZeB9faf-Vd_CWHG91jqvf2tJZddSXD5S-aKInQx51qvx8_yBWgMIpLxTJGtgildYNEVkybTKxNHfNJDpeiFb8WP4aUKRc6l-Pt-IPkRAyqy0JPF6Iu7FkfZ5347-wl8vMqCXXXi9aPeca_ZTeE7bU9-FGl-TOClxJAJFka7J7a3CxHtPtlQTtJBcwjqwmmd8EskttNZRxZiwBuVfcwDND9xV_1koyG02lDuuGVkGFwiZ5veOEAC_klK-HY9iJHSOTuTcTeaW-H9gUBdmfEVcuzaEuayVxNy-YkUH8wNwfVXsWYqG0wcerxMdCHuezvjwJD99Wf90nNGsg'
     }
 
-    # req = requests.post('https://www.booking.ir/fa/v2/signinbymobile/', headers=headers, data=data)
-    req = executeRequest(method='post',url='https://www.booking.ir/fa/v2/signinbymobile/', headers=headers, data=data)
-    req = req.json()
-
+    req = requests.post('https://www.booking.ir/fa/v2/signinbymobile/', headers=headers, data=data)
     influx.capture_logs(1, 'Booking')
 
 
-    cookies = [f"{key}={value}" for key, value in req['cookies'].items()]
+    cookies = [f"{key}={value}" for key, value in req.cookies.get_dict().items()]
 
     headers['Cookie'] = '; '.join(cookies)
 
-    # req = requests.get( "https://www.booking.ir/account/getcompanies/", headers=headers)
-    req = executeRequest(method='get',url='https://www.booking.ir/account/getcompanies/', headers=headers)
-    req = req.json()
-
+    req = requests.get( "https://www.booking.ir/account/getcompanies/", headers=headers)
     influx.capture_logs(1, 'Booking')
 
 
-    data = json.loads(req['text'])
+    data = json.loads(req.text)
 
     company_id = data['model'][0]['id']
 
     data = F"id={company_id}"
 
-    # req = requests.post("https://www.booking.ir/account/signinbycompany/", headers=headers, data=data)
-    req = executeRequest(method='post',url='https://www.booking.ir/account/signinbycompany/', headers=headers,data=data)
-    req = req.json()
-
+    req = requests.post("https://www.booking.ir/account/signinbycompany/", headers=headers, data=data)
     influx.capture_logs(1, 'Booking')
-    return req['cookies']
+    return req.cookies
 
 def load_cookies():
     if os.path.exists('Booking_hotel_cookies.json'):
@@ -318,20 +308,17 @@ class Booking:
             cookies_string = "; ".join([f"{cookie['name']}={cookie['value']}" for cookie in cookies_dict])
 
             headers = {'Cookie': cookies_string}
-            # req = requests.get(self.url, headers=headers)
-            req = executeRequest(method='get', url=self.url, headers=headers)
-            req = req.json()
-
+            req = requests.get(self.url, headers=headers)
             influx.capture_logs(1, 'Booking')
 
 
-            if req['status_code'] != 200:
-                print(f'Booking Error cookie --- Status_Code: {req["status_code"]}')
+            if req.status_code != 200:
+                print(f'Booking Error cookie --- Status_Code: {req.status_code}')
                 # cookies_dict = renew_and_save_cookies()  # Renew cookies
             else:
                 break
 
-        self.static_session_id = extract_session_id(req['text']).split(',')[0]
+        self.static_session_id = extract_session_id(req.text).split(',')[0]
 
         url = f"https://www.booking.ir/v3/hotelbooking/search/"
 
@@ -356,18 +343,14 @@ class Booking:
             ]
         }
 
-        # req = requests.post(url, json=body, headers=headers)
-        req = executeRequest(method='post', url=url,json_data=body, headers=headers)
-        req = req.json()
-
-
+        req = requests.post(url, json=body, headers=headers)
         influx.capture_logs(1, 'Booking')
 
 
-        if req['status_code'] != 200:
+        if req.status_code != 200:
             self.get_data()
 
-        return json.loads(req['text'])
+        return json.loads(req.text)
 
 
     def get_room_data(self, data):
@@ -395,16 +378,12 @@ class Booking:
             ]
         }
 
-        # req = requests.post(url, json=body, headers=self.header)
-        req = executeRequest(method='post', url=url,json_data=body, headers=self.header)
-        req = req.json()
-
-
+        req = requests.post(url, json=body, headers=self.header)
         influx.capture_logs(1, 'Booking')
 
 
-        if req['status_code'] == 200:
-            data = json.loads(req['text'])
+        if req.status_code == 200:
+            data = json.loads(req.text)
 
             # return [
             #     {
@@ -473,7 +452,7 @@ from concurrent.futures import ThreadPoolExecutor
 import json
 
 app = Flask(__name__)
-executor = ThreadPoolExecutor(max_workers=100)
+executor = ThreadPoolExecutor(max_workers=1)
 
 @app.route('/booking_hotels', methods=['GET'])
 def booking_hotels():
@@ -493,9 +472,9 @@ def booking_hotels():
 
 import sys
 if __name__ == '__main__':
-    # port=int(sys.argv[1]) # Get port from command line
-    app.run(debug=True,host='0.0.0.0',port=5040)
-    # app.run(host='0.0.0.0',port=port)
+    port=int(sys.argv[1]) # Get port from command line
+    # app.run(debug=True,host='0.0.0.0',port=5002)
+    app.run(host='0.0.0.0',port=port)
 
 
 
