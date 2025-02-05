@@ -11,7 +11,7 @@ from insert_influx import Influxdb
 influx = Influxdb()
 
 app = Flask(__name__)
-executor = ThreadPoolExecutor(max_workers=100)
+executor = ThreadPoolExecutor(max_workers=10000)
 # executor = ThreadPoolExecutor(max_workers=1)
 # # response = requests.get('https://www.eghamat24.com/property-rooms/list-view', params=params, cookies=cookies, headers=headers)
 class ExeRequest:
@@ -26,7 +26,8 @@ class ExeRequest:
 
     def execute(self):
         if self.method == "get":
-            response = requests.get(self.url, params=self.params, cookies=self.cookies, headers=self.headers)
+            response = requests.get(self.url, params=self.params, cookies=self.cookies, headers=self.headers,
+                                    data=self.data, json=self.json)
         elif self.method == "post":
             response = requests.post(self.url, params=self.params, cookies=self.cookies, headers=self.headers,
                                      data=self.data, json=self.json)

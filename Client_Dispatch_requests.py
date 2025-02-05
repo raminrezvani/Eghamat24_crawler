@@ -3,9 +3,17 @@ import itertools
 
 # Define servers and ports
 servers = [
-    ("45.149.76.168", [6000, 6001, 6002]),
-    ("130.185.77.24", [6000, 6001, 6002])
+    # ("45.149.76.168", [6000]),
+    ("45.149.76.168", [6000, 6001, 6002,6003,6004,6005]),
+    ("130.185.77.24", [6000, 6001, 6002,6003,6004,6005]),
+    # ("185.252.31.31", [6000, 6001, 6002,6003,6004,6005])
 ]
+
+# servers = [
+#     ("45.149.76.168", [6000]),
+#     # ("130.185.77.24", [6000, 6001, 6002])
+# ]
+
 # Create an iterator for round-robin selection
 server_iterator = itertools.cycle([(server, port) for server, ports in servers for port in ports])
 

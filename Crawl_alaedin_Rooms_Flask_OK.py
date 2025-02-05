@@ -13,6 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 import jdatetime
+# from Client_Dispatch_requests import executeRequest
 
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from insert_influx import Influxdb
@@ -124,6 +125,22 @@ def fetch_room_data(hotelCod, start_date, stay):
                 headers=request_headers,
                 data=data
             )
+
+
+            # response = executeRequest(method='post',
+            #     url=f'https://www.alaedin.travel/GetHotels/GetRoomPrice?'
+            #     f'hotelCod={hotelCod}'
+            #     f'&stDate={start_date}'
+            #     f'&reslong={stay}'
+            #     f'&searchId=',
+            #     cookies=cookies_dict,
+            #     headers=request_headers,
+            #     data=data
+            # )
+            # response=response.json()
+
+
+
             influx.capture_logs(1, 'Alaedin')
 
             break

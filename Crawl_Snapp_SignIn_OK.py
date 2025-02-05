@@ -8,6 +8,9 @@ from datetime import datetime, timedelta
 from flask import Flask, request, jsonify
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from insert_influx import Influxdb
+
+from Client_Dispatch_requests import executeRequest
+
 influx = Influxdb()
 app = Flask(__name__)
 executor = ThreadPoolExecutor(max_workers=100)  # Adjust the max_workers based on your needs
@@ -35,9 +38,15 @@ def fetch_hotel_data(city_id, date_from, date_to, page):
     }
     while True:
         try:
-            response = requests.get('https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params, headers=headers)
+            # response = requests.get('https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params, headers=headers)
+
+            response = executeRequest(method='get',url='https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params,
+                                    headers=headers)
+            response = response.json()
+
+
             influx.capture_logs(1, 'Snapp')
-            return json.loads(response.text)
+            return json.loads(response['text'])
         except:
             print(f'Retrying page {page}...')
             time.sleep(2)
@@ -62,9 +71,13 @@ def fetch_room_data(hotelID, date_from, date_to):
     }
     while True:
         try:
-            response = requests.get('https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params, headers=headers)
+            # response = requests.get('https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params, headers=headers)
+            response = executeRequest(method='get',url='https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params,
+                                    headers=headers)
+            response=response.json()
+
             influx.capture_logs(1, 'Snapp')
-            return json.loads(response.text)
+            return json.loads(response['text'])
         except:
             print(f'Retrying room data for hotel {hotelID}...')
             time.sleep(2)
@@ -72,6 +85,54 @@ def fetch_room_data(hotelID, date_from, date_to):
 # Flask endpoint to get room data
 @app.route('/SnappTrip_Hotelrooms', methods=['GET'])
 def get_hotel_rooms():
+    city_id = request.args.get('city_id')
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+
+    lst_hotels = []
+
+    # Step 1: Fetch hotel data in parallel
+    futures = {executor.submit(fetch_hotel_data, city_id, date_from, date_to, i): i for i in range(1, 10)}
+    hotel_data_results = []
+
+    for future in as_completed(futures):
+        json_data = future.result()
+        if 'data' in json_data:
+            hotel_data_results.extend(json_data['data'])  # Collect hotel data first
+
+    # Step 2: Fetch room data in parallel
+    room_futures = {executor_room.submit(fetch_room_data, htl['id'], date_from, date_to): htl for htl in
+                    hotel_data_results}
+
+    for future in as_completed(room_futures):
+        htl = room_futures[future]
+        try:
+            json_data_room = future.result()
+            if 'data' in json_data_room and json_data_room['data']:
+                rooms_data = json_data_room['data'][0].get('rooms', [])
+                hotel = {
+                    'hotel_name': htl['title'],
+                    'hotel_star': htl['stars'],
+                    'min_price': '',
+                    'provider': 'Snapp',
+                    'rooms': [
+                        {
+                            'name': rom['title'],
+                            'price': rom['prices']['local_price_off'],
+                            'capacity': rom['adults'],
+                            'provider': 'Snapp',
+                        }
+                        for rom in rooms_data if rom.get('available_rooms', 0) > 0
+                    ]
+                }
+                lst_hotels.append(hotel)
+        except Exception as e:
+            print(f"Error fetching room data for {htl['id']}: {e}")
+
+    return jsonify(lst_hotels)
+
+
+def get_hotel_rooms_old():
     city_id = request.args.get('city_id')
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
