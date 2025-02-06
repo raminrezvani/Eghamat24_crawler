@@ -264,11 +264,12 @@ def extract_session_id(response_text):
 
 from datetime import datetime,timedelta
 class Jimbo:
-    def __init__(self, target, start_date, end_date, adults):
+    def __init__(self, target, start_date, end_date, adults,isAnalysis):
         self.target = target
         self.start_date = start_date
         self.end_date = end_date
         self.adults = adults
+        self.isAnalysis = isAnalysis
         self.executor = ThreadPoolExecutor(max_workers=50)
         self.url = f"https://www.jimbo.ir/fa/hotel/iran/{target.lower()}/?i={self.start_date}&o={self.end_date}&r=1;&n=ir&d=1640809&lt=1&dt=2&a=2&c=0#/"
         self.header = {
@@ -452,6 +453,16 @@ class Jimbo:
 
         hotels = data['model'].get('hotelBookingItineraries', [])
 
+
+        #---------- Check for 5-Star hotels
+        if self.isAnalysis=='1':
+            hotels=[htl for htl in hotels if int(htl['hotel']['rating'])==5]
+            print('Jimbo Analysis')
+        else:
+            print('Jimbo RASII')
+        #-------------------
+
+
         def hotel_handler(hotel):
             try:
                 return {
@@ -525,10 +536,11 @@ def Jimbo_hotels():
     end_date = request.args.get('end_date')
     adults=request.args.get('adults')
     destination=request.args.get('target')
+    isAnalysis = request.args.get('isAnalysis')
     if not start_date or not end_date:
         return jsonify({"error": "Missing start_date or end_date"}), 400
 
-    book = Jimbo(destination, start_date, end_date, adults)
+    book = Jimbo(destination, start_date, end_date, adults,isAnalysis)
     future = executor.submit(book.get_result,)
     result = future.result()
     # Optionally, you can return a response immediately

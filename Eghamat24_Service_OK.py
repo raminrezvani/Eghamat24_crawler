@@ -13,10 +13,11 @@ app = Flask(__name__)
 executor = ThreadPoolExecutor(max_workers=100)
 # executor = ThreadPoolExecutor(max_workers=1)
 class Eghamat24:
-    def __init__(self, target='MHD', startdate='2024-10-16', stay='3'):
+    def __init__(self, target='MHD', startdate='2024-10-16', stay='3',isAnalysis=False):
         self.target = target
         self.startdate = startdate
         self.stay = stay
+        self.isAnalysis=isAnalysis
         # self.executor = ThreadPoolExecutor(max_workers=100)
         self.hotelResults = list()
 
@@ -96,45 +97,20 @@ class Eghamat24:
 
 
 
-        #===== OLD =======
-        # lst_items = htmlparsed.xpath('//div[@class="mb-3 mb-md-4"]')
-        # lst_items_text = [' '.join(a.xpath('span/text()')).split('\r')[0] for a in lst_items]
-        # lst_prices = htmlparsed.xpath('//div[@class="subtitle-3 fw-semibold fw-md-bold"]/text()')
-        # lst_prices_text = [a.replace('\r\n', '').replace('تومان', '').strip() for a in lst_prices]
-
-
-        #
-        # one_hotelResults = {
-        #     'hotel_name': hotel['title'],
-        #     'hotel_star': hotel['star'],
-        #     'provider': 'Eghamat24',
-        #     'min_price': '',
-        #     'rooms': []
-        # }
-        #
-        # for iter in range(len(lst_items_text)):
-        #     dic = {
-        #         'name': lst_items_text[iter],
-        #         'price': self.convert_to_number(lst_prices_text[iter]),
-        #         'provider': 'Eghamat24'
-        #     }
-        #     one_hotelResults['rooms'].append(dic)
-        #
-        # try:
-        #     one_hotelResults['min_price'] = min(
-        #         int(room['price']) for room in one_hotelResults['rooms'] if room['price'] != 'نامشخص'
-        #     )
-        # except:
-        #     print('error_')
-        #     one_hotelResults['min_price'] = 'نامشخص'
-        #
-        # print('Eghamat24     '+hotel['title'])
-        # self.hotelResults.append(one_hotelResults)
 
     def get_data(self):
         # with open(f'eghamat_data/lstHotels_{self.target}_withProperty.json', 'r', encoding='utf-8') as file:
         with open(f'eghamat_data/lstHotels_{self.target}_withProperty.json', 'r', encoding='utf-8') as file:
             lst_items_ok = json.load(file)
+
+        # #---------- Check 5-Star of hotel
+        if (self.isAnalysis == '1'):
+            lst_items_ok = [htl for htl in lst_items_ok if htl['star'] == '5']
+            print('Eghamat Analysis')
+        else:
+            print('Eghamat RASII')
+        # #------------------------
+
 
         lst_thread = []
         for hotel in lst_items_ok:
@@ -151,8 +127,9 @@ def fetch_hotels():
     target = request.args.get('target', 'MHD')
     startdate = request.args.get('startdate', '2024-10-16')
     stay = request.args.get('stay', '3')
+    isAnalysis = request.args.get('isAnalysis')
 
-    eghamat = Eghamat24(target, startdate, stay)
+    eghamat = Eghamat24(target, startdate, stay,isAnalysis)
     eghamat.get_data()
     results = eghamat.get_hotelResults()
     return jsonify(results)
