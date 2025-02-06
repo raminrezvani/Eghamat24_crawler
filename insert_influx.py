@@ -39,46 +39,50 @@ class Influxdb():
         return total_threads
 
     def capture_logs(self,count_call,provider):
-        point = (
-            Point("system_metrics")
-            .field("count_call", count_call)
-            .field("provider", provider)
-            .time(time.time_ns(), WritePrecision.NS)
-        )
+        #
+        # point = (
+        #     Point("system_metrics")
+        #     .field("count_call", count_call)
+        #     .field("provider", provider)
+        #     .time(time.time_ns(), WritePrecision.NS)
+        # )
+        #
+        # # Write the point to InfluxDB
+        # try:
+        #     self.write_api.write(bucket=provider, org=self.INFLUXDB_ORG, record=point)
+        #     print(f"Data written: count_call={count_call}%, provider={provider}% ")
+        # except Exception as e:
+        #     print(f"Failed to write data to InfluxDB: {e}")
 
-        # Write the point to InfluxDB
-        try:
-            self.write_api.write(bucket=provider, org=self.INFLUXDB_ORG, record=point)
-            # print(f"Data written: count_call={count_call}%, provider={provider}% ")
-        except Exception as e:
-            print(f"Failed to write data to InfluxDB: {e}")
-
-
+        return ''
 
 
     def capture_metrics(self):
-        """Capture system metrics and write to InfluxDB."""
-        while True:
-            # Get CPU and RAM usage
-            cpu_usage = psutil.cpu_percent(interval=1)
-            ram_usage = psutil.virtual_memory().percent
-            # Get total thread count
-            thread_count = self.count_system_threads()
-            # Create a data point
-            point = (
-                Point("system_metrics")
-                    .field("cpu_usage", cpu_usage)
-                    .field("ram_usage", ram_usage)
-                    .field('thread_count', thread_count)
-                    .time(time.time_ns(), WritePrecision.NS)
-            )
 
-            # Write the point to InfluxDB
-            try:
-                self.write_api.write(bucket=self.INFLUXDB_BUCKET, org=self.INFLUXDB_ORG, record=point)
-                print(f"Data written: CPU={cpu_usage}%, RAM={ram_usage}%, Thread={thread_count}")
-            except Exception as e:
-                print(f"Failed to write data to InfluxDB: {e}")
-
-            # Sleep for a second before the next capture
-            time.sleep(1)
+        #
+        # """Capture system metrics and write to InfluxDB."""
+        # while True:
+        #     # Get CPU and RAM usage
+        #     cpu_usage = psutil.cpu_percent(interval=1)
+        #     ram_usage = psutil.virtual_memory().percent
+        #     # Get total thread count
+        #     thread_count = self.count_system_threads()
+        #     # Create a data point
+        #     point = (
+        #         Point("system_metrics")
+        #             .field("cpu_usage", cpu_usage)
+        #             .field("ram_usage", ram_usage)
+        #             .field('thread_count', thread_count)
+        #             .time(time.time_ns(), WritePrecision.NS)
+        #     )
+        #
+        #     # Write the point to InfluxDB
+        #     try:
+        #         self.write_api.write(bucket=self.INFLUXDB_BUCKET, org=self.INFLUXDB_ORG, record=point)
+        #         print(f"Data written: CPU={cpu_usage}%, RAM={ram_usage}%, Thread={thread_count}")
+        #     except Exception as e:
+        #         print(f"Failed to write data to InfluxDB: {e}")
+        #
+        #     # Sleep for a second before the next capture
+        #     time.sleep(1)
+        return ''

@@ -100,6 +100,11 @@ def get_hotel_rooms():
         if 'data' in json_data:
             hotel_data_results.extend(json_data['data'])  # Collect hotel data first
 
+
+    # #---------- Check Star of hotel
+    # hotel_data_results=[htl for htl in hotel_data_results if htl['stars']==5]
+    # #------------------------
+
     # Step 2: Fetch room data in parallel
     room_futures = {executor_room.submit(fetch_room_data, htl['id'], date_from, date_to): htl for htl in
                     hotel_data_results}
