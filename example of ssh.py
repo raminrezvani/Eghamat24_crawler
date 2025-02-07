@@ -1,4 +1,7 @@
-ssh mqtt.angizehco.com -p 2858
+ssh smartland@mqtt.angizehco.com -p 2858
+
+ssh root@185.252.28.42 -p 22
+qwaszx!!11
 
 
 udo netstat -tulnp | grep 6000
