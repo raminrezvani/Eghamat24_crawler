@@ -13,11 +13,16 @@ app = Flask(__name__)
 executor = ThreadPoolExecutor(max_workers=100)
 # executor = ThreadPoolExecutor(max_workers=1)
 class Eghamat24:
-    def __init__(self, target='MHD', startdate='2024-10-16', stay='3',isAnalysis=False):
+    def __init__(self, target='MHD', startdate='2024-10-16', stay='3',isAnalysiss=False,hotelstarAnalysis=[]):
         self.target = target
         self.startdate = startdate
         self.stay = stay
-        self.isAnalysis=isAnalysis
+        # self.isAnalysis=isAnalysis
+        self.isAnalysis=isAnalysiss[0] if isAnalysiss is tuple else isAnalysiss ,
+        self.isAnalysis = self.isAnalysis[0] if isinstance(self.isAnalysis, tuple) else self.isAnalysis
+
+        self.hotelstarAnalysis=hotelstarAnalysis
+
         # self.executor = ThreadPoolExecutor(max_workers=100)
         self.hotelResults = list()
 
@@ -105,7 +110,7 @@ class Eghamat24:
 
         # #---------- Check 5-Star of hotel
         if (self.isAnalysis == '1'):
-            lst_items_ok = [htl for htl in lst_items_ok if htl['star'] == '5']
+            lst_items_ok = [htl for htl in lst_items_ok if str(htl['star']) in self.hotelstarAnalysis]
             print('Eghamat Analysis')
         else:
             print('Eghamat RASII')
@@ -129,7 +134,11 @@ def fetch_hotels():
     stay = request.args.get('stay', '3')
     isAnalysis = request.args.get('isAnalysis')
 
-    eghamat = Eghamat24(target, startdate, stay,isAnalysis)
+    hotelstarAnalysis=request.args.get('hotelstarAnalysis')
+    hotelstarAnalysis=json.loads(hotelstarAnalysis)
+
+
+    eghamat = Eghamat24(target, startdate, stay,isAnalysis,hotelstarAnalysis)
     eghamat.get_data()
     results = eghamat.get_hotelResults()
     return jsonify(results)

@@ -253,12 +253,21 @@ def extract_session_id(response_text):
 
 from datetime import datetime,timedelta
 class Booking:
-    def __init__(self, target, start_date, end_date, adults,isAnalysis):
+    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[]):
         self.target = target
         self.start_date = start_date
         self.end_date = end_date
         self.adults = adults
-        self.isAnalysis=isAnalysis
+        # self.isAnalysis=isAnalysis
+
+
+        self.isAnalysis=isAnalysiss[0] if isAnalysiss is tuple else isAnalysiss ,
+        self.isAnalysis = self.isAnalysis[0] if isinstance(self.isAnalysis, tuple) else self.isAnalysis
+
+        self.hotelstarAnalysis=hotelstarAnalysis
+
+
+
         self.executor = ThreadPoolExecutor(max_workers=50)
         self.url = f"https://www.booking.ir/fa/hotel/iran/{target.lower()}/?i={self.start_date}&o={self.end_date}&r=1;&n=ir&d=1640809&lt=1&dt=2&a=2&c=0#/"
         self.header = {
@@ -455,7 +464,7 @@ class Booking:
 
         #---------- Check for 5-Star hotels
         if self.isAnalysis=='1':
-            hotels=[htl for htl in hotels if int(htl['hotel']['rating'])==5]
+            hotels=[htl for htl in hotels if str(int(htl['hotel']['rating'])) in self.hotelstarAnalysis]
             print('Booking Analysis')
         else:
             print('Booking RASII')
@@ -493,10 +502,15 @@ def booking_hotels():
     adults=request.args.get('adults')
     destination=request.args.get('target')
     isAnalysis=request.args.get('isAnalysis')
+
+    hotelstarAnalysis=request.args.get('hotelstarAnalysis')
+    hotelstarAnalysis=json.loads(hotelstarAnalysis)
+
+
     if not start_date or not end_date:
         return jsonify({"error": "Missing start_date or end_date"}), 400
 
-    book = Booking(destination, start_date, end_date, adults,isAnalysis)
+    book = Booking(destination, start_date, end_date, adults,isAnalysis,hotelstarAnalysis)
     future = executor.submit(book.get_result,)
     result = future.result()
     # Optionally, you can return a response immediately

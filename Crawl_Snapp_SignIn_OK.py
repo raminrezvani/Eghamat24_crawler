@@ -93,6 +93,8 @@ def get_hotel_rooms():
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
     isAnalysis = request.args.get('isAnalysis')
+    hotelstarAnalysis=request.args.get('hotelstarAnalysis')
+    hotelstarAnalysis=json.loads(hotelstarAnalysis)
 
     lst_hotels = []
 
@@ -108,7 +110,7 @@ def get_hotel_rooms():
 
     # #---------- Check 5-Star of hotel
     if (isAnalysis=='1'):
-        hotel_data_results=[htl for htl in hotel_data_results if htl['stars']==5]
+        hotel_data_results=[htl for htl in hotel_data_results if str(htl['stars']) in hotelstarAnalysis]
         print('Snapp Analysis')
     else:
         print('Snapp RASII')
