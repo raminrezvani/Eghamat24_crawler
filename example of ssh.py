@@ -4,7 +4,7 @@ ssh root@185.252.28.42 -p 22
 qwaszx!!11
 
 
-udo netstat -tulnp | grep 6000
+netstat -tulnp | grep 6000
 sudo kill -9 <PID>
 
 #

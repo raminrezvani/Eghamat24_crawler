@@ -1,6 +1,6 @@
 import os
 
-
+from Booking_Hotel_flask_OK import Booking
 
 os.system("title Booking Hotel Flask")
 
@@ -292,7 +292,7 @@ def extract_session_id(response_text):
 
 from datetime import datetime,timedelta
 class Booking:
-    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[],forInfo=0):
+    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[]):
         self.target = target
         self.start_date = start_date
         self.end_date = end_date
@@ -353,11 +353,10 @@ class Booking:
         #--- Load SessionID
         self.get_sessionID()
 
-        if (forInfo==0):
-            #---- Load hotels info from Json
-            with open(f'Booking_hotels/Booking_hotel_info_{self.target}.json','r') as f:
-                a=f.read()
-                self.hotels=json.loads(a)
+        #---- Load hotels info from Json
+        with open(f'Booking_hotel_info_{self.target}.json','r') as f:
+            a=f.read()
+            self.hotels=json.loads(a)
 
 
     def get_sessionID(self):
@@ -409,11 +408,11 @@ class Booking:
 
         influx.capture_logs(1, 'Booking')
         if req['status_code'] != 200:
-            self.get_hotels_info_writeJson()
+            self.get_hotels_info()
 
         #--------- parse ---
 
-        req_json=json.loads(req['text'])
+        req_json=json.loads(req.text)
         hotels = req_json['model']['hotelBookingItineraries']
         lst_hotel_info=[]
         for htl in hotels:
@@ -426,10 +425,7 @@ class Booking:
             htl_info['hotelId']=htl['hotelId']
             lst_hotel_info.append(htl_info)
 
-        if not os.path.exists('Booking_hotels'):
-            os.makedirs('Booking_hotels')  # Creates the folder
-
-        json.dump(lst_hotel_info,open(f'Booking_hotels/Booking_hotel_info_{self.target}.json','w'))
+        json.dump(lst_hotel_info,open('Booking_hotel_info.json','w'))
         return ''
 
         # return json.loads(req['text'])
@@ -517,27 +513,17 @@ class Booking:
 #=== for first time = (create hotel info )
  # with open(f'Booking_hotel_info_{self.target}.json','r') as f:
 lst_targets=list(Dic_mapping_destination.keys())
-start_date = datetime.today() + timedelta(days=4)
-start_date = start_date.strftime("%Y-%m-%d")
-
-end_date = datetime.today() + timedelta(days=7)
-end_date = end_date.strftime("%Y-%m-%d")
-
+start_date=''
+end_date=''
 isAnalysiss=False
 adults='2'
-import concurrent.futures
+
 for tg in lst_targets:
-    if os.path.exists(f'Booking_hotels/Booking_hotel_info_{tg}.json'):
+    if os.path.exists(f'Booking_hotel_info_{tg}.json'):
         ''
     else:
-    #     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-    #         futures = [executor.submit(process_target, tg, start_date, end_date, adults, isAnalysiss) for tg in
-    #                    lst_targets]
-    #         concurrent.futures.wait(futures)  # Ensures all threads complete
-
-        ins = Booking(tg, start_date, end_date, adults, isAnalysiss, hotelstarAnalysis=[],forInfo=1)
+        ins = Booking(tg, start_date, end_date, adults, isAnalysiss, hotelstarAnalysis=[])
         ins.get_hotels_info_writeJson()
-        print(f'Booking_hotels/Booking_hotel_info_{tg}.json  is created!')
 
 #=================
 

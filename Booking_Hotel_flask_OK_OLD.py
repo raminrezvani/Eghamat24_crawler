@@ -1,7 +1,4 @@
 import os
-
-
-
 os.system("title Booking Hotel Flask")
 
 import json
@@ -22,40 +19,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from insert_influx import Influxdb
 influx = Influxdb()
 
-Dic_mapping_destination={
-            'KIH':'1640809',
-            'GSM':'1640807',
-            'MHD' : '1640810',
-            'THR': '1641221',
-            'SYZ' : '1640811',
-            'IFN': '1640808',
-            'AZD': '1640806',
-            'TBZ' : '1640812',
 
-
-            'AWZ': '1641237',
-            'BND': '1642120',
-            'ZBR': '1640813',
-            'KER': '1641231',
-            'KSH': '1641223',
-            'RAS': '1641216',
-            'SRY': '1641222',
-
-
-
-
-            # =========
-            'ABD': '1641239',
-            'BUZ': '1642111',
-            'GBT': '1641220',
-            'OMH': '1641235',
-            'ADU': '1641224',
-            'HDM': '1641217',
-            'RZR': '1643472',
-            'KHD': '1643423',
-            'NSH': '1643449',
-            # ===========
-        }
 #===============
 # create cookie priodically
 # ========= With selenium ========
@@ -95,15 +59,12 @@ def create_cookie_with_selenium():
     driver.quit()
 
 
-
 #== for first time ===
 if os.path.exists('Booking_hotel_cookies.json'):
     ''
 else:  # file nist
     create_cookie_with_selenium()
 #=================
-
-
 
 
 # Function to delete cookies.json every 3 hours
@@ -292,7 +253,7 @@ def extract_session_id(response_text):
 
 from datetime import datetime,timedelta
 class Booking:
-    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[],forInfo=0):
+    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[]):
         self.target = target
         self.start_date = start_date
         self.end_date = end_date
@@ -309,7 +270,7 @@ class Booking:
 
         self.executor = ThreadPoolExecutor(max_workers=50)
         self.url = f"https://www.booking.ir/fa/hotel/iran/{target.lower()}/?i={self.start_date}&o={self.end_date}&r=1;&n=ir&d=1640809&lt=1&dt=2&a=2&c=0#/"
-        self.headers = {
+        self.header = {
             'Content-Type': 'application/json'
         }
         self.static_session_id=''
@@ -347,39 +308,41 @@ class Booking:
             'KHD': '1643423',
             'NSH': '1643449',
             # ===========
+
+
+
+
         }
-        #---- Load cookies
-        self.cookies_dict = load_cookies()
-        #--- Load SessionID
-        self.get_sessionID()
 
-        if (forInfo==0):
-            #---- Load hotels info from Json
-            with open(f'Booking_hotels/Booking_hotel_info_{self.target}.json','r') as f:
-                a=f.read()
-                self.hotels=json.loads(a)
+    def get_data(self):
+        #
+        # start_date = datetime.strptime(self.start_date, "%Y-%m-%d") + timedelta(days=1)
+        # end_date = datetime.strptime(self.end_date, "%Y-%m-%d") + timedelta(days=1)
+        # adults=str(self.adults)
 
+        # Load or renew cookies
+        cookies_dict = load_cookies()
 
-    def get_sessionID(self):
         while True:
             # cookies_string = '; '.join([f'{name}={value}' for name, value in cookies_dict.items()])
-            cookies_string = "; ".join([f"{cookie['name']}={cookie['value']}" for cookie in self.cookies_dict])
+            cookies_string = "; ".join([f"{cookie['name']}={cookie['value']}" for cookie in cookies_dict])
 
-            self.headers['Cookie']= cookies_string
+            headers = {'Cookie': cookies_string}
             # req = requests.get(self.url, headers=headers)
-            req = executeRequest(method='get', url=self.url, headers=self.headers)
+            req = executeRequest(method='get', url=self.url, headers=headers)
             req = req.json()
+
             influx.capture_logs(1, 'Booking')
+
+
             if req['status_code'] != 200:
                 print(f'Booking Error cookie --- Status_Code: {req["status_code"]}')
                 # cookies_dict = renew_and_save_cookies()  # Renew cookies
             else:
                 break
+
         self.static_session_id = extract_session_id(req['text']).split(',')[0]
 
-
-    def get_hotels_info_writeJson(self):
-        #_-- for all destination
         url = f"https://www.booking.ir/v3/hotelbooking/search/"
 
         body = {
@@ -404,38 +367,23 @@ class Booking:
         }
 
         # req = requests.post(url, json=body, headers=headers)
-        req = executeRequest(method='post', url=url,json_data=body, headers=self.headers)
+        req = executeRequest(method='post', url=url,json_data=body, headers=headers)
         req = req.json()
 
+
         influx.capture_logs(1, 'Booking')
+
+
         if req['status_code'] != 200:
-            self.get_hotels_info_writeJson()
+            self.get_data()
 
-        #--------- parse ---
+        return json.loads(req['text'])
 
-        req_json=json.loads(req['text'])
-        hotels = req_json['model']['hotelBookingItineraries']
-        lst_hotel_info=[]
-        for htl in hotels:
-            htl_info={}
-            htl_info['star']=str(int(htl['hotel']['rating']))
-            htl_info['hotel_name']=htl['hotel']['title']
-            htl_info["min_price"]=0
-            htl_info["provider"]="booking"
-            htl_info["rooms"]=[]
-            htl_info['hotelId']=htl['hotelId']
-            lst_hotel_info.append(htl_info)
-
-        if not os.path.exists('Booking_hotels'):
-            os.makedirs('Booking_hotels')  # Creates the folder
-
-        json.dump(lst_hotel_info,open(f'Booking_hotels/Booking_hotel_info_{self.target}.json','w'))
-        return ''
-
-        # return json.loads(req['text'])
 
     def get_room_data(self, data):
         url = f'https://www.booking.ir/v3/hotelbooking/search/'
+        # print("--------------------------------------")
+        # print("room run")
 
         body = {
             "isStaticPage": False,
@@ -458,12 +406,26 @@ class Booking:
         }
 
         # req = requests.post(url, json=body, headers=self.header)
-        req = executeRequest(method='post', url=url,json_data=body, headers=self.headers)
+        req = executeRequest(method='post', url=url,json_data=body, headers=self.header)
         req = req.json()
+
+
         influx.capture_logs(1, 'Booking')
+
 
         if req['status_code'] == 200:
             data = json.loads(req['text'])
+
+            # return [
+            #     {
+            #         "price": convert_to_tooman(room['totalPrice']),
+            #         "name": room['rooms'][0]['roomTypeTitle'],
+            #         "provider": "booking",
+            #         "buy_link": "https://booking.ir/"
+            #     }
+            #     for room in data['model']['hotelBookingItineraries'][0]['packages']
+            #     if not room.get('nonRefundable',False)
+            # ]
             return [
                 {
                     "price": convert_to_tooman(room['totalPrice']),
@@ -476,31 +438,42 @@ class Booking:
                 # if room.get('nonRefundable') is not None
             ]
 
+
+
         else:
             return None
 
     def get_result(self):
+        try:
+            data = self.get_data()
+            if not data['isSucceed']:
+                return {'status': False, 'data': [], 'message': "داده ای یافت نشد"}
+        except:
+            return {'status': False, "data": [], 'message': "اتمام زمان"}
+        hotels = data['model']['hotelBookingItineraries']
         result = []
 
         def hotel_handler(hotel):
             result.append({
-                "hotel_name": hotel['hotel_name'],
-                "hotel_star": hotel['star'],
-                "min_price": 0,
+                "hotel_name": hotel['hotel']['title'],
+                "hotel_star": hotel['hotel']['rating'],
+                "min_price": convert_to_tooman(hotel['bestPackage']['totalPrice']),
                 "provider":"booking",
                 "rooms": self.get_room_data(hotel)
             })
 
         #---------- Check for 5-Star hotels
         if self.isAnalysis=='1':
-            hotels=[htl for htl in self.hotels if str(int(htl['star'])) in self.hotelstarAnalysis]
+            hotels=[htl for htl in hotels if str(int(htl['hotel']['rating'])) in self.hotelstarAnalysis]
             print('Booking Analysis')
         else:
             print('Booking RASII')
 
         #-------------------
+
+
         # self.executor.map(hotel_handler, hotels)
-        future = [self.executor.submit(hotel_handler, hotel) for hotel in self.hotels]
+        future = [self.executor.submit(hotel_handler, hotel) for hotel in hotels]
 
         wait(future)
 
@@ -511,36 +484,6 @@ class Booking:
 # book.get_result()
 # print('finish')
 # # result = get_booking_tours("2024-08-15", 3)
-
-
-
-#=== for first time = (create hotel info )
- # with open(f'Booking_hotel_info_{self.target}.json','r') as f:
-lst_targets=list(Dic_mapping_destination.keys())
-start_date = datetime.today() + timedelta(days=4)
-start_date = start_date.strftime("%Y-%m-%d")
-
-end_date = datetime.today() + timedelta(days=7)
-end_date = end_date.strftime("%Y-%m-%d")
-
-isAnalysiss=False
-adults='2'
-import concurrent.futures
-for tg in lst_targets:
-    if os.path.exists(f'Booking_hotels/Booking_hotel_info_{tg}.json'):
-        ''
-    else:
-    #     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-    #         futures = [executor.submit(process_target, tg, start_date, end_date, adults, isAnalysiss) for tg in
-    #                    lst_targets]
-    #         concurrent.futures.wait(futures)  # Ensures all threads complete
-
-        ins = Booking(tg, start_date, end_date, adults, isAnalysiss, hotelstarAnalysis=[],forInfo=1)
-        ins.get_hotels_info_writeJson()
-        print(f'Booking_hotels/Booking_hotel_info_{tg}.json  is created!')
-
-#=================
-
 
 
 #===== CALLING ==============
