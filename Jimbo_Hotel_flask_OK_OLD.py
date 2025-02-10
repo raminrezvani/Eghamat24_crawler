@@ -1,9 +1,6 @@
 import os
-
-
-
-os.system("title Jimboo Hotel Flask")
-
+os.system("title Jimbo Hotel Flask")
+from concurrent.futures import ProcessPoolExecutor, as_completed
 import json
 from concurrent.futures import ThreadPoolExecutor, wait
 # from app_crawl.helpers import convert_to_tooman
@@ -16,50 +13,13 @@ import os
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
-
+from insert_influx import Influxdb
 from threading import Thread
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-from insert_influx import Influxdb
 influx = Influxdb()
-
-Dic_mapping_destination={
-            'KIH':'1640809',
-            'GSM':'1640807',
-            'MHD' : '1640810',
-            'THR': '1641221',
-            'SYZ' : '1640811',
-            'IFN': '1640808',
-            'AZD': '1640806',
-            'TBZ' : '1640812',
-
-
-            'AWZ': '1641237',
-            'BND': '1642120',
-            'ZBR': '1640813',
-            'KER': '1641231',
-            'KSH': '1641223',
-            'RAS': '1641216',
-            'SRY': '1641222',
-
-
-
-
-            # =========
-            'ABD': '1641239',
-            'BUZ': '1642111',
-            'GBT': '1641220',
-            'OMH': '1641235',
-            'ADU': '1641224',
-            'HDM': '1641217',
-            'RZR': '1643472',
-            'KHD': '1643423',
-            'NSH': '1643449',
-            # ===========
-        }
 #===============
 # create cookie priodically
 # ========= With selenium ========
-
 def create_cookie_with_selenium():
     driver = webdriver.Chrome()
     driver.get('https://www.jimbo.ir/sign-in/')
@@ -93,19 +53,20 @@ def create_cookie_with_selenium():
 
     cookies_dict = driver.get_cookies()
     # Save cookies to a JSON file
-    with open("Jimboo_hotel_cookies.json", "w") as file:
+    with open("Jimbo_hotel_cookies.json", "w") as file:
         json.dump(cookies_dict, file)
     driver.quit()
     return cookies_dict
+#
+
+
 
 #== for first time ===
-if os.path.exists('Jimboo_hotel_cookies.json'):
+if os.path.exists('Jimbo_hotel_cookies.json'):
     ''
 else:  # file nist
     create_cookie_with_selenium()
 #=================
-
-
 
 
 # Function to delete cookies.json every 3 hours
@@ -114,8 +75,8 @@ def delete_cookies_periodically():
         # Wait for 3 hours (3 hours * 60 minutes * 60 seconds)
         time.sleep(20 * 60 * 60)
         # Check if cookies.json exists and delete it
-        if os.path.exists('Jimboo_hotel_cookies.json'):
-            os.remove('Jimboo_hotel_cookies.json')
+        if os.path.exists('Jimbo_hotel_cookies.json'):
+            os.remove('Jimbo_hotel_cookies.json')
             print("Deleted cookies.json")
             #-- create again
             create_cookie_with_selenium()
@@ -203,10 +164,13 @@ def get_authorization():
     }
 
     # req = requests.post('https://www.jimbo.ir/fa/v2/signinbymobile/', headers=headers, data=data)
-    req = executeRequest(method='post',url='https://www.jimbo.ir/fa/v2/signinbymobile/', headers=headers, data=data)
+    req = executeRequest(method='post',
+                         url='https://www.jimbo.ir/fa/v2/signinbymobile/',
+                         headers=headers, data=data)
+
     req = req.json()
 
-    influx.capture_logs(1, 'Jimboo')
+    influx.capture_logs(1,'Jimboo')
 
 
     cookies = [f"{key}={value}" for key, value in req['cookies'].items()]
@@ -214,11 +178,13 @@ def get_authorization():
     headers['Cookie'] = '; '.join(cookies)
 
     # req = requests.get( "https://www.jimbo.ir/account/getcompanies/", headers=headers)
-    req = executeRequest(method='get',url='https://www.jimbo.ir/account/getcompanies/', headers=headers)
+    req = executeRequest(method='get',
+                         url='https://www.jimbo.ir/account/getcompanies/',
+                         headers=headers)
     req = req.json()
 
-    influx.capture_logs(1, 'Jimboo')
 
+    influx.capture_logs(1, 'Jimboo')
 
     data = json.loads(req['text'])
 
@@ -226,20 +192,24 @@ def get_authorization():
 
     data = F"id={company_id}"
 
-    # req = requests.post("https://www.jimbo.ir/account/signinbycompany/", headers=headers, data=data)
-    req = executeRequest(method='post',url='https://www.jimbo.ir/account/signinbycompany/', headers=headers,data=data)
-    req = req.json()
-
+    # req = requests.post("https://www.jimbo.ir/account/signinbycompany/",
+    # headers=headers, data=data)
+    req = executeRequest(method='post',
+                         url='https://www.jimbo.ir/account/signinbycompany/',
+                         headers=headers,data=data)
+    req=req.json()
     influx.capture_logs(1, 'Jimboo')
+
     return req['cookies']
 
 def load_cookies():
-    if os.path.exists('Jimboo_hotel_cookies.json'):
-        with open('Jimboo_hotel_cookies.json', 'r') as json_file:
+    if os.path.exists('Jimbo_hotel_cookies.json'):
+        with open('Jimbo_hotel_cookies.json', 'r') as json_file:
             return json.load(json_file)
     else:
-        print(' Jimboo_hotel_cookies.json not exists !!!!!! ')
+        print(' Jimbo_hotel_cookies.json not exists !!!!!! ')
         # return renew_and_save_cookies()
+
 #
 # def renew_and_save_cookies():
 #     #========= With selenium ========
@@ -248,22 +218,22 @@ def load_cookies():
 #     print('Signed in...')
 #     try:
 #         driver.find_element(By.XPATH, '//input[@id="Mobile"]').clear()
-#         driver.find_element(By.XPATH, '//input[@id="Mobile"]').send_keys('09153148721')
+#         driver.find_element(By.XPATH, '//input[@id="Mobile"]').send_keys('09150028721')
 #     except:
 #         ''
 #     driver.find_element(By.XPATH, '//span[contains(text(),"ورود با رمز ثابت")]/..').click()
 #     time.sleep(1)
 #     driver.find_elements(By.XPATH, '//input[@placeholder="رمز عبور ثابت"]')[1].clear()
-#     driver.find_elements(By.XPATH, '//input[@placeholder="رمز عبور ثابت"]')[1].send_keys('@MST8451030yf')
+#     driver.find_elements(By.XPATH, '//input[@placeholder="رمز عبور ثابت"]')[1].send_keys('Mst1231020@')
 #
 #     driver.find_elements(By.XPATH, '//span[text()="ورود"]/..')[-1].click()
 #
 #     time.sleep(1)
 #     while(True):
-#         if (driver.current_url == "https://www.jimbo.ir/account/companies/?returnUrl=/"):
+#         if (driver.current_url == "https://www.jimbo.ir/"):
 #             print('In page mojalal safar...')
-#             driver.find_element(By.XPATH, '//button[contains(text(),"مجلل سفر طلایی")]').click()
-#             time.sleep(5)
+#             # driver.find_element(By.XPATH, '//*[@id="mainBody"]/header/div/div[1]/div/div[1]/div[1]/div/ul/li/span/span')
+#             # time.sleep(5)
 #             print('cookie ok')
 #             break
 #         else:
@@ -275,7 +245,7 @@ def load_cookies():
 #
 #     cookies_dict = driver.get_cookies()
 #     # Save cookies to a JSON file
-#     with open("Jimboo_hotel_cookies.json", "w") as file:
+#     with open("Jimbo_hotel_cookies.json", "w") as file:
 #         json.dump(cookies_dict, file)
 #     driver.quit()
 #     return cookies_dict
@@ -283,7 +253,7 @@ def load_cookies():
 #     #============ OLD code with requests ===========
 #     # cookies = get_authorization()
 #     # cookies_dict = {cookie.name: cookie.value for cookie in cookies}
-#     # with open('Jimboo_hotel_cookies.json', 'w') as json_file:
+#     # with open('Jimbo_hotel_cookies.json', 'w') as json_file:
 #     #     json.dump(cookies_dict, json_file)
 #     # return cookies_dict
 
@@ -294,12 +264,12 @@ def extract_session_id(response_text):
 
 from datetime import datetime,timedelta
 class Jimbo:
-    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[],forInfo=0):
+    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[]):
         self.target = target
         self.start_date = start_date
         self.end_date = end_date
         self.adults = adults
-        # self.isAnalysis=isAnalysis
+        # self.isAnalysis = isAnalysis
 
 
         self.isAnalysis=isAnalysiss[0] if isAnalysiss is tuple else isAnalysiss ,
@@ -311,7 +281,7 @@ class Jimbo:
 
         self.executor = ThreadPoolExecutor(max_workers=50)
         self.url = f"https://www.jimbo.ir/fa/hotel/iran/{target.lower()}/?i={self.start_date}&o={self.end_date}&r=1;&n=ir&d=1640809&lt=1&dt=2&a=2&c=0#/"
-        self.headers = {
+        self.header = {
             'Content-Type': 'application/json'
         }
         self.static_session_id=''
@@ -349,39 +319,40 @@ class Jimbo:
             'KHD': '1643423',
             'NSH': '1643449',
             # ===========
+
+
+
+
         }
-        #---- Load cookies
-        self.cookies_dict = load_cookies()
-        #--- Load SessionID
-        self.get_sessionID()
 
-        if (forInfo==0):
-            #---- Load hotels info from Json
-            with open(f'Jimboo_hotels/Jimboo_hotel_info_{self.target}.json','r') as f:
-                a=f.read()
-                self.hotels=json.loads(a)
+    def get_data(self):
+        #
+        # start_date = datetime.strptime(self.start_date, "%Y-%m-%d") + timedelta(days=1)
+        # end_date = datetime.strptime(self.end_date, "%Y-%m-%d") + timedelta(days=1)
+        # adults=str(self.adults)
 
+        # Load or renew cookies
+        cookies_dict = load_cookies()
 
-    def get_sessionID(self):
         while True:
             # cookies_string = '; '.join([f'{name}={value}' for name, value in cookies_dict.items()])
-            cookies_string = "; ".join([f"{cookie['name']}={cookie['value']}" for cookie in self.cookies_dict])
+            cookies_string = "; ".join([f"{cookie['name']}={cookie['value']}" for cookie in cookies_dict])
 
-            self.headers['Cookie']= cookies_string
+            headers = {'Cookie': cookies_string}
             # req = requests.get(self.url, headers=headers)
-            req = executeRequest(method='get', url=self.url, headers=self.headers)
+            req = executeRequest(method='get', url=self.url, headers=headers)
             req = req.json()
-            influx.capture_logs(1, 'Jimboo')
+
+            # influx.capture_logs(1, 'Jimboo')
+
             if req['status_code'] != 200:
-                print(f'Jimbo Error cookie --- Status_Code: {req["status_code"]}')
+                print(f'Jimbo Error Cookie --- Status_Code: {req["status_code"]}')
                 # cookies_dict = renew_and_save_cookies()  # Renew cookies
             else:
                 break
+
         self.static_session_id = extract_session_id(req['text']).split(',')[0]
 
-
-    def get_hotels_info_writeJson(self):
-        #_-- for all destination
         url = f"https://www.jimbo.ir/v3/hotelbooking/search/"
 
         body = {
@@ -406,38 +377,21 @@ class Jimbo:
         }
 
         # req = requests.post(url, json=body, headers=headers)
-        req = executeRequest(method='post', url=url,json_data=body, headers=self.headers)
-        req = req.json()
+        req = executeRequest(method='post',
+                             url=url,json_data=body, headers=headers)
+        req=req.json()
+        # influx.capture_logs(1, 'Jimboo')
 
-        influx.capture_logs(1, 'Jimboo')
         if req['status_code'] != 200:
-            self.get_hotels_info_writeJson()
+            self.get_data()
 
-        #--------- parse ---
+        return json.loads(req['text'])
 
-        req_json=json.loads(req['text'])
-        hotels = req_json['model']['hotelBookingItineraries']
-        lst_hotel_info=[]
-        for htl in hotels:
-            htl_info={}
-            htl_info['star']=str(int(htl['hotel']['rating']))
-            htl_info['hotel_name']=htl['hotel']['title']
-            htl_info["min_price"]=0
-            htl_info["provider"]="Jimboo"
-            htl_info["rooms"]=[]
-            htl_info['hotelId']=htl['hotelId']
-            lst_hotel_info.append(htl_info)
-
-        if not os.path.exists('Jimboo_hotels'):
-            os.makedirs('Jimboo_hotels')  # Creates the folder
-
-        json.dump(lst_hotel_info,open(f'Jimboo_hotels/Jimboo_hotel_info_{self.target}.json','w'))
-        return ''
-
-        # return json.loads(req['text'])
 
     def get_room_data(self, data):
         url = f'https://www.jimbo.ir/v3/hotelbooking/search/'
+        # print("--------------------------------------")
+        # print("room run")
 
         body = {
             "isStaticPage": False,
@@ -460,17 +414,33 @@ class Jimbo:
         }
 
         # req = requests.post(url, json=body, headers=self.header)
-        req = executeRequest(method='post', url=url,json_data=body, headers=self.headers)
+        req = executeRequest(method='post',
+                             url=url,json_data=body, headers=self.header)
+
         req = req.json()
-        influx.capture_logs(1, 'Jimboo')
+
+
+        # influx.capture_logs(1, 'Jimboo')
+
 
         if req['status_code'] == 200:
             data = json.loads(req['text'])
+
+            # return [
+            #     {
+            #         "price": convert_to_tooman(room['totalPrice']),
+            #         "name": room['rooms'][0]['roomTypeTitle'],
+            #         "provider": "Jimboo",
+            #         "buy_link": "https://jimbo.ir/"
+            #     }
+            #     for room in data['model']['hotelBookingItineraries'][0]['packages']
+            #     if not room.get('nonRefundable',False)
+            # ]
             return [
                 {
                     "price": convert_to_tooman(room['totalPrice']),
                     "name": room['rooms'][0]['roomTypeTitle'],
-                    'capacity':room['rooms'][0]['adultCount'],
+                    'capacity': room['rooms'][0]['adultCount'],
                     "provider": "Jimboo",
                     "buy_link": "https://jimbo.ir/"
                 }
@@ -482,27 +452,72 @@ class Jimbo:
             return None
 
     def get_result(self):
+        try:
+            data = self.get_data()
+            if not data.get('isSucceed', False):
+                return {'status': False, 'data': [], 'message': "داده ای یافت نشد"}
+        except Exception as e:
+            print(f"Error fetching data: {e}")  # Debugging
+            return {'status': False, "data": [], 'message': "اتمام زمان"}
+
+        hotels = data['model'].get('hotelBookingItineraries', [])
+
+
+        #---------- Check for 5-Star hotels
+        if self.isAnalysis=='1':
+            hotels=[htl for htl in hotels if str(int(htl['hotel']['rating'])) in self.hotelstarAnalysis]
+            print('Jimbo Analysis')
+        else:
+            print('Jimbo RASII')
+        #-------------------
+
+
+        def hotel_handler(hotel):
+            try:
+                return {
+                    "hotel_name": hotel['hotel']['title'],
+                    "hotel_star": hotel['hotel']['rating'],
+                    "min_price": convert_to_tooman(hotel['bestPackage']['totalPrice']),
+                    "provider": "Jimboo",
+                    "rooms": self.get_room_data(hotel)
+                }
+            except Exception as e:
+                print(f"Error processing hotel: {e}")  # Debugging
+                return None  # Return None to avoid breaking the loop
+
+        result = []
+        with ThreadPoolExecutor(max_workers=100) as executor:
+            future_to_hotel = {executor.submit(hotel_handler, hotel): hotel for hotel in hotels}
+
+            for future in as_completed(future_to_hotel):
+                hotel_data = future.result()
+                if hotel_data:  # Ignore None values from failed executions
+                    result.append(hotel_data)
+
+        return result
+
+
+    def get_result_old(self):
+        try:
+            data = self.get_data()
+            if not data['isSucceed']:
+                return {'status': False, 'data': [], 'message': "داده ای یافت نشد"}
+        except:
+            return {'status': False, "data": [], 'message': "اتمام زمان"}
+        hotels = data['model']['hotelBookingItineraries']
         result = []
 
         def hotel_handler(hotel):
             result.append({
-                "hotel_name": hotel['hotel_name'],
-                "hotel_star": hotel['star'],
-                "min_price": 0,
+                "hotel_name": hotel['hotel']['title'],
+                "hotel_star": hotel['hotel']['rating'],
+                "min_price": convert_to_tooman(hotel['bestPackage']['totalPrice']),
                 "provider":"Jimboo",
                 "rooms": self.get_room_data(hotel)
             })
 
-        #---------- Check for 5-Star hotels
-        if self.isAnalysis=='1':
-            hotels=[htl for htl in self.hotels if str(int(htl['star'])) in self.hotelstarAnalysis]
-            print('Jimboo Analysis')
-        else:
-            print('Jimboo RASII')
-
-        #-------------------
         # self.executor.map(hotel_handler, hotels)
-        future = [self.executor.submit(hotel_handler, hotel) for hotel in self.hotels]
+        future = [self.executor.submit(hotel_handler, hotel) for hotel in hotels]
 
         wait(future)
 
@@ -515,36 +530,6 @@ class Jimbo:
 # # result = get_booking_tours("2024-08-15", 3)
 
 
-
-#=== for first time = (create hotel info )
- # with open(f'Jimboo_hotel_info_{self.target}.json','r') as f:
-lst_targets=list(Dic_mapping_destination.keys())
-start_date = datetime.today() + timedelta(days=4)
-start_date = start_date.strftime("%Y-%m-%d")
-
-end_date = datetime.today() + timedelta(days=7)
-end_date = end_date.strftime("%Y-%m-%d")
-
-isAnalysiss=False
-adults='2'
-import concurrent.futures
-for tg in lst_targets:
-    if os.path.exists(f'Jimboo_hotels/Jimboo_hotel_info_{tg}.json'):
-        ''
-    else:
-    #     with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-    #         futures = [executor.submit(process_target, tg, start_date, end_date, adults, isAnalysiss) for tg in
-    #                    lst_targets]
-    #         concurrent.futures.wait(futures)  # Ensures all threads complete
-
-        ins = Jimbo(tg, start_date, end_date, adults, isAnalysiss, hotelstarAnalysis=[],forInfo=1)
-        ins.get_hotels_info_writeJson()
-        print(f'Jimboo_hotels/Jimboo_hotel_info_{tg}.json  is created!')
-
-#=================
-
-
-
 #===== CALLING ==============
 
 from flask import Flask, request, jsonify
@@ -555,12 +540,12 @@ app = Flask(__name__)
 executor = ThreadPoolExecutor(max_workers=100)
 
 @app.route('/Jimbo_hotels', methods=['GET'])
-def Jimboo_hotels():
+def Jimbo_hotels():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
     adults=request.args.get('adults')
     destination=request.args.get('target')
-    isAnalysis=request.args.get('isAnalysis')
+    isAnalysis = request.args.get('isAnalysis')
 
     hotelstarAnalysis=request.args.get('hotelstarAnalysis')
     hotelstarAnalysis=json.loads(hotelstarAnalysis)
@@ -575,14 +560,12 @@ def Jimboo_hotels():
     # Optionally, you can return a response immediately
     return jsonify(result)
 
-
 import sys
 if __name__ == '__main__':
     # port=int(sys.argv[1]) # Get port from command line
     app.run(debug=True,host='0.0.0.0',port=6060)
     # app.run(host='0.0.0.0',port=5020)
     # app.run(host='0.0.0.0',port=port)
-
 
 
 # result = get_booking_tours("2024-08-15", 3)
