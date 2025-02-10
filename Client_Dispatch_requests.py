@@ -17,7 +17,7 @@ import itertools
 
 # Define servers and ports
 servers = [
-    ("mqtt.angizehco.com", [6000, 6001, 6002, 6003, 6004, 6005]),
+    # ("mqtt.angizehco.com", [6000, 6001, 6002, 6003, 6004, 6005]),
     ("45.149.76.168", [6000, 6001, 6002, 6003, 6004, 6005]),
     ("130.185.77.24", [6000, 6001, 6002, 6003, 6004, 6005]),
 ]
@@ -48,7 +48,7 @@ def next_server():
 
 import json
 # req = requests.post('https://www.booking.ir/fa/v2/signinbymobile/', headers=headers, data=data)
-def executeRequest(method, url, params=None, cookies=None, headers=None, data=None, json_data=None):
+def executeRequest(method, url, params=None, cookies=None, headers=None, data=None, json_data=None,verify=False):
     # Select the next server and port in a round-robin fashion
 
     server, port = next_server().split(':')  # Get next server-port pair

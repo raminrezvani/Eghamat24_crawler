@@ -84,50 +84,12 @@ def fetch_room_data(hotelID, date_from, date_to):
             return json.loads(response['text'])
         except:
             print(f'Retrying room data for hotel {hotelID}...')
-            # time.sleep(2)
-
-cityIDs={
-    'KIH':'6918',
-    'THR':'6433',
-    'IFN':'6326',
-    'MHD':'6497',
-    'TBZ':'6220',
-    'SYZ':'6640',
-    'GSM':'6931',
-    'AZD':'6969',
-    'AWZ':'6541',
-    'BND':'6926',
-    'KER':'6713',
-    'KSH':'6745',
-    'RAS':'6814',
-    'SRY':'6870',
-    'ZBR':'6604',
-
-
-    # =========
-    'ABD':'6549',
-    'BUZ':'6390',
-    'GBT':'6782',
-    'OMH':'6264',
-    'ADU':'6288',
-    'HDM':'6956',
-    'RZR':'6857',
-    'KHD':'6839',
-    'NSH':'6865',
-    #===========
-
-
-
-
-
-
-}
+            time.sleep(2)
 
 # Flask endpoint to get room data
 @app.route('/SnappTrip_Hotelrooms', methods=['GET'])
 def get_hotel_rooms():
     city_id = request.args.get('city_id')
-    target=request.args.get('target')
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
     isAnalysis = request.args.get('isAnalysis')
@@ -136,21 +98,26 @@ def get_hotel_rooms():
 
     lst_hotels = []
 
-    #--- read hotels from file hotel_info
-    with open(f'Snapp_Hotels/Snapp_Hotels_info_{target}.json', 'r') as f:
-        a = f.read()
-        hotel_data_results = json.loads(a)
+    # Step 1: Fetch hotel data in parallel
+    futures = {executor.submit(fetch_hotel_data, city_id, date_from, date_to, i): i for i in range(1, 10)}
+    hotel_data_results = []
+
+    for future in as_completed(futures):
+        json_data = future.result()
+        if 'data' in json_data:
+            hotel_data_results.extend(json_data['data'])  # Collect hotel data first
+
 
     # #---------- Check 5-Star of hotel
     if (isAnalysis=='1'):
-        hotel_data_results=[htl for htl in hotel_data_results if str(htl['hotel_star']) in hotelstarAnalysis]
+        hotel_data_results=[htl for htl in hotel_data_results if str(htl['stars']) in hotelstarAnalysis]
         print('Snapp Analysis')
     else:
         print('Snapp RASII')
     # #------------------------
 
     # Step 2: Fetch room data in parallel
-    room_futures = {executor_room.submit(fetch_room_data, htl['hotel_id'], date_from, date_to): htl for htl in
+    room_futures = {executor_room.submit(fetch_room_data, htl['id'], date_from, date_to): htl for htl in
                     hotel_data_results}
 
     for future in as_completed(room_futures):
@@ -160,8 +127,8 @@ def get_hotel_rooms():
             if 'data' in json_data_room and json_data_room['data']:
                 rooms_data = json_data_room['data'][0].get('rooms', [])
                 hotel = {
-                    'hotel_name': htl['hotel_name'],
-                    'hotel_star': htl['hotel_star'],
+                    'hotel_name': htl['title'],
+                    'hotel_star': htl['stars'],
                     'min_price': '',
                     'provider': 'Snapp',
                     'rooms': [
@@ -224,67 +191,6 @@ def get_hotel_rooms_old():
 
     return jsonify(lst_hotels)
 
-
-
-
-#---------------------
-
-
-def get_hotels_info_writeJson():
-    # lst_targets = list(Dic_mapping_destination.keys())
-    start_date = datetime.today() + timedelta(days=4)
-    start_date = start_date.strftime("%Y-%m-%d")
-
-    end_date = datetime.today() + timedelta(days=7)
-    end_date = end_date.strftime("%Y-%m-%d")
-
-
-    for target in list(cityIDs.keys()):
-
-        if os.path.exists(f'Snapp_Hotels/Snapp_Hotels_info_{target}.json'):
-            ''
-        else:
-
-
-            city_id=cityIDs[target]
-            # Step 1: Fetch hotel data in parallel
-            futures = {executor.submit(fetch_hotel_data, city_id, start_date, end_date, i): i for i in range(1, 10)}
-            hotel_data_results = []
-
-            for future in as_completed(futures):
-                json_data = future.result()
-                if 'data' in json_data:
-                    hotel_data_results.extend(json_data['data'])  # Collect hotel data first
-
-            lst_hotels=[]
-            #--- parse each hotel
-            for htl in hotel_data_results:
-                hotel_info={}
-                hotel_info['hotel_id']=htl['id']
-                hotel_info['hotel_name']=htl['title']
-                try:
-                    hotel_info['hotel_star'] = htl['stars']
-                except:
-                    hotel_info['hotel_star']=3
-                    print('error')
-
-                lst_hotels.append(hotel_info)
-            #------
-            if not os.path.exists('Snapp_Hotels'):
-                os.makedirs('Snapp_Hotels')  # Creates the folder
-
-            json.dump(lst_hotels, open(f'Snapp_Hotels/Snapp_Hotels_info_{target}.json', 'w'))
-            print(f'Snapp_Hotels/Snapp_Hotels_info_{target}.json  is created!')
-    #=------------
-
-#--- for first time ----
-get_hotels_info_writeJson()
-#=================
-
-
-
-
-#_-----------
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5004, threaded=False)
 
