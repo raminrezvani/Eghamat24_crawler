@@ -141,6 +141,9 @@ def get_hotel_rooms():
         a = f.read()
         hotel_data_results = json.loads(a)
 
+    # lst_hotl=
+    # for httt in hotel_data_results:
+    #     if ()
     # #---------- Check 5-Star of hotel
     if (isAnalysis=='1'):
         hotel_data_results=[htl for htl in hotel_data_results if str(htl['hotel_star']) in hotelstarAnalysis]
@@ -191,10 +194,15 @@ def get_hotel_rooms_old():
     for i in range(1, 10):  # Assuming 4 pages of hotels
         futures.append(executor.submit(fetch_hotel_data, city_id, date_from, date_to, i))
 
+    lst_unique_hotels=[]
     for future in as_completed(futures):
         json_data = future.result()
         for htl in json_data['data']:
             hotelName = htl['title']
+
+
+
+
             hotelID = htl['id']
             hotel = {
                 'hotel_name': hotelName,
@@ -257,11 +265,20 @@ def get_hotels_info_writeJson():
                     hotel_data_results.extend(json_data['data'])  # Collect hotel data first
 
             lst_hotels=[]
+            lst_unique_hotels=[]
             #--- parse each hotel
             for htl in hotel_data_results:
                 hotel_info={}
                 hotel_info['hotel_id']=htl['id']
                 hotel_info['hotel_name']=htl['title']
+
+                # --- redundant hotelName
+                if (hotel_info['hotel_name'] in lst_unique_hotels):
+                    continue
+                lst_unique_hotels.append(hotel_info['hotel_name'])
+                # ------
+
+
                 try:
                     hotel_info['hotel_star'] = htl['stars']
                 except:
