@@ -17,7 +17,7 @@ influx = Influxdb()
 app = Flask(__name__)
 
 task_queue = queue.PriorityQueue()  # Priority queue for tasks
-executor = ThreadPoolExecutor(max_workers=10000)  # 10 worker threads
+executor = ThreadPoolExecutor(max_workers=1)  # 10 worker threads
 condition = threading.Condition()
 
 

@@ -13,7 +13,7 @@ from concurrent.futures import ThreadPoolExecutor
 from seleniumwire import webdriver
 from selenium.webdriver.common.by import By
 import jdatetime
-# from Client_Dispatch_requests import executeRequest
+from Client_Dispatch_requests import executeRequest
 
 # urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from insert_influx import Influxdb
@@ -89,15 +89,17 @@ def get_rooms():
     hotelCod = request.args.get('hotelCod')
     start_date = request.args.get('start_date')
     stay = request.args.get('stay')
+    priorityTimestamp = request.args.get('priorityTimestamp')
+
 
     # Run request in a separate thread
-    future = executor.submit(fetch_room_data, hotelCod, start_date, stay)
+    future = executor.submit(fetch_room_data, hotelCod, start_date, stay,priorityTimestamp)
     result = future.result()  # Wait for the thread to finish and get the result
 
     return jsonify(result)
 import time
 # Function to handle fetching room data
-def fetch_room_data(hotelCod, start_date, stay):
+def fetch_room_data(hotelCod, start_date, stay,priorityTimestamp):
 
     while(True):
         try:
@@ -115,20 +117,8 @@ def fetch_room_data(hotelCod, start_date, stay):
             }
 
 
-            response = requests.post(
-                f'https://www.alaedin.travel/GetHotels/GetRoomPrice?'
-                f'hotelCod={hotelCod}'
-                f'&stDate={start_date}'
-                f'&reslong={stay}'
-                f'&searchId=',
-                cookies=cookies_dict,
-                headers=request_headers,
-                data=data
-            )
-
-
-            # response = executeRequest(method='post',
-            #     url=f'https://www.alaedin.travel/GetHotels/GetRoomPrice?'
+            # response = requests.post(
+            #     f'https://www.alaedin.travel/GetHotels/GetRoomPrice?'
             #     f'hotelCod={hotelCod}'
             #     f'&stDate={start_date}'
             #     f'&reslong={stay}'
@@ -137,7 +127,22 @@ def fetch_room_data(hotelCod, start_date, stay):
             #     headers=request_headers,
             #     data=data
             # )
+
+
+            response = executeRequest(method='post',
+                url=f'https://www.alaedin.travel/GetHotels/GetRoomPrice?'
+                f'hotelCod={hotelCod}'
+                f'&stDate={start_date}'
+                f'&reslong={stay}'
+                f'&searchId=',
+                cookies=cookies_dict,
+                headers=request_headers,
+                data=data,
+                priorityTimestamp=priorityTimestamp
+
+            )
             # response=response.json()
+            response = json.loads(response)
 
 
 
@@ -149,7 +154,7 @@ def fetch_room_data(hotelCod, start_date, stay):
             time.sleep(2)
             continue
 
-    return response.json()
+    return response
 
 if __name__ == '__main__':
     shamsi_date_api = get_shamsi_date()
