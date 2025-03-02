@@ -172,64 +172,66 @@ def convert_persian_number_to_english(number: str):
     # --- response
     return "".join(result)
 
-
-def get_authorization():
-    print(f'-----Booking Authotization -----')
-    headers = {
-        'accept': '*/*',
-        'accept-language': 'en-US,en;q=0.9',
-        'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-        # 'cookie': 'analytics_campaign={%22source%22:%22google%22%2C%22medium%22:%22organic%22}; analytics_token=22ffd8a1-e581-be11-efe1-43157fd04a08; SERVERID=fanavaweb3; _yngt_iframe=1; _yngt=4ada5a09-9baf9-95841-17f60-061524e7f4766; __RequestVerificationToken=eL5-NSSEy-Y7wsshrCV-Nsuii8fFBwElkwFha527YS7ZtleRU0K-NGgBh3-qw2scrJWcAKwZBlZTiN0g6GLWWF1Gqqa0wTkwkVmxWcvt3t41; analytics_session_token=76f4fa94-1961-f7df-3e1c-27997364cf77; yektanet_session_last_activity=8/9/2024; _gid=GA1.2.703081956.1723190029; Authentication=13jVmKckM0NT0eI3jcq3mTIwaVU_Hb87ZV3LNPOvGBtV8c5vHn4SlqlbpmolUCHfYQ99n4NzDZX88J22cCeXFSLX3HWRi1LqBwZ8WMjpzYT5CWUXxVHsQ5fGpVecaPH2c8ONr4kFeqBZLSscscr8h6RlAxG8qvlf3EoXEYW0CSqdldlYl7ti43LQbcQwPBsTwQF7Ehd5hQGzGNbCMVjOXRxsMj0Z5kdhijdW0BsM9iBL8Esfe7tCgobeNoLi7O_SlE-iCkZXJfcKAGM72f2YKK9b-lANv7CdhmQWbBq3eF4KPvI4c-he9kyfI9nEewEqioXKQ-kKJBFRJFGfmppH1_aLMowINAVfP0upf8RkbkkbYn7E6XzEPdkmmFxmfy052poag5-48lBb0rsI18P0tQUT9a-GinT1OtvG1jcVhZvK-IIlyZLzFxP9Ecv5bGwp0eEPExYtoxRyn7xHh28MM4908cbVmc9D3dZW7JufQ0L6E8Unjo6hZxc_2rnpqKX8YPYnrckJ1__v2TK2hJCBjBDqYUjxDJAttkbZlmmq39lTJMxXqiI-MYtsnb0hXqI0huKBgdGr_fuF0vc2TgBFq2gwdd8xFT2OfZVM68W_PORW7yNNPeMscrpbSI49RLMvNWmzTKNsIQx8UlXwBUKCxTUPXwnxk06aLqpBGdRq5em3jIfwb4n9kRcE2Jghl1I-wx68EOV5-oGeVG7VLGETf8fX9nNp1qBSclYx1ZppeCrR2wWR92_qpVe6T4JbzmMwrYdmWKoDGvsXZhqC3asRs2vu2veWZFP8IOlxR6BeTrxcmTVq2B65Z3rwliFGTBrMGBawyMuhoYA_eBNlO0dZuC-0XNKg-HHMTTdDXmQc2bpVfhiP31gTOau2e6KLkm3Zf1Y_uJgKKgCmJU1HDL92VuIUkUmz9pHuCv6eMNiJW2v0gLD_NaRS0NHP6CuwOJxgzYetcgIbZaQTg0v-lfkbmA; _dc_gtm_UA-174237991-1=1; _ga=GA1.2.191314830.1719310326; _ga_N9ZBHQ0R9X=GS1.1.1723189964.3.1.1723190107.45.0.0',
-        'origin': 'https://www.booking.ir',
-        'priority': 'u=1, i',
-        'referer': 'https://www.booking.ir/sign-in/',
-        'sec-ch-ua': '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
-        'sec-ch-ua-mobile': '?0',
-        'sec-ch-ua-platform': '"Windows"',
-        'sec-fetch-dest': 'empty',
-        'sec-fetch-mode': 'cors',
-        'sec-fetch-site': 'same-origin',
-        'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
-        'x-requested-with': 'XMLHttpRequest',
-    }
-
-    data = {
-        'mobile': '09153148721',
-        'password': '@MST8451030yf',
-        'countryCode': 'IR',
-        'g-recaptcha-response':'03AFcWeA7MtvAispnmY6sIcjIwpxRDN2H5yw3kmtaObON4gwgFXT33l8IiGZYjyJPXvweoyJXQXKYtiGs6yMnxMiER_9LVY5l4nVi9lnQ2AL-ceng5uBiii3SFe4gHbpY9DqMyg5odbRPjo8jwKNOFbWSoA8Xncp5ATZ7ODcKQU2jlfO59GfgGPf3BsWqLB9GD4psVeMIu8yVAQhWC03o09duF8_zBSHAMoHmmcQkUS9YSfEAknI5oRBeGeICEoRSYXzQgUP3kdwhSxJpL6Aendwlp1lydG6BHQnK_5RVhAd6w76tBJxYtGMOQknXN3DhnYgMEcadAIx2J7d57kpk9iPhkLYOXNzfKMUFVNmcHwpI-vJ01_MkSUeDbYRe0W7dA5MQ9e-tOxrgNQph_WpBZiRmQpOLbRM4gA97-OPVhSJ0azK4y505_dWpeMLfkoUMcRdRJVE9o78pzgi-oNmJfMHxyfcfUvHfSE6_lZl5zM7_N16s_0wQsMh_k_SOTNGW4KzSGFFxr_PL2A57DdJ9WAZeB9faf-Vd_CWHG91jqvf2tJZddSXD5S-aKInQx51qvx8_yBWgMIpLxTJGtgildYNEVkybTKxNHfNJDpeiFb8WP4aUKRc6l-Pt-IPkRAyqy0JPF6Iu7FkfZ5347-wl8vMqCXXXi9aPeca_ZTeE7bU9-FGl-TOClxJAJFka7J7a3CxHtPtlQTtJBcwjqwmmd8EskttNZRxZiwBuVfcwDND9xV_1koyG02lDuuGVkGFwiZ5veOEAC_klK-HY9iJHSOTuTcTeaW-H9gUBdmfEVcuzaEuayVxNy-YkUH8wNwfVXsWYqG0wcerxMdCHuezvjwJD99Wf90nNGsg'
-    }
-
-    # req = requests.post('https://www.booking.ir/fa/v2/signinbymobile/', headers=headers, data=data)
-    req = executeRequest(method='post',url='https://www.booking.ir/fa/v2/signinbymobile/', headers=headers, data=data)
-    req = req.json()
-
-    influx.capture_logs(1, 'Booking')
-
-
-    cookies = [f"{key}={value}" for key, value in req['cookies'].items()]
-
-    headers['Cookie'] = '; '.join(cookies)
-
-    # req = requests.get( "https://www.booking.ir/account/getcompanies/", headers=headers)
-    req = executeRequest(method='get',url='https://www.booking.ir/account/getcompanies/', headers=headers)
-    req = req.json()
-
-    influx.capture_logs(1, 'Booking')
-
-
-    data = json.loads(req['text'])
-
-    company_id = data['model'][0]['id']
-
-    data = F"id={company_id}"
-
-    # req = requests.post("https://www.booking.ir/account/signinbycompany/", headers=headers, data=data)
-    req = executeRequest(method='post',url='https://www.booking.ir/account/signinbycompany/', headers=headers,data=data)
-    req = req.json()
-
-    influx.capture_logs(1, 'Booking')
-    return req['cookies']
+#
+# def get_authorization():
+#     print(f'-----Booking Authotization -----')
+#     headers = {
+#         'accept': '*/*',
+#         'accept-language': 'en-US,en;q=0.9',
+#         'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+#         # 'cookie': 'analytics_campaign={%22source%22:%22google%22%2C%22medium%22:%22organic%22}; analytics_token=22ffd8a1-e581-be11-efe1-43157fd04a08; SERVERID=fanavaweb3; _yngt_iframe=1; _yngt=4ada5a09-9baf9-95841-17f60-061524e7f4766; __RequestVerificationToken=eL5-NSSEy-Y7wsshrCV-Nsuii8fFBwElkwFha527YS7ZtleRU0K-NGgBh3-qw2scrJWcAKwZBlZTiN0g6GLWWF1Gqqa0wTkwkVmxWcvt3t41; analytics_session_token=76f4fa94-1961-f7df-3e1c-27997364cf77; yektanet_session_last_activity=8/9/2024; _gid=GA1.2.703081956.1723190029; Authentication=13jVmKckM0NT0eI3jcq3mTIwaVU_Hb87ZV3LNPOvGBtV8c5vHn4SlqlbpmolUCHfYQ99n4NzDZX88J22cCeXFSLX3HWRi1LqBwZ8WMjpzYT5CWUXxVHsQ5fGpVecaPH2c8ONr4kFeqBZLSscscr8h6RlAxG8qvlf3EoXEYW0CSqdldlYl7ti43LQbcQwPBsTwQF7Ehd5hQGzGNbCMVjOXRxsMj0Z5kdhijdW0BsM9iBL8Esfe7tCgobeNoLi7O_SlE-iCkZXJfcKAGM72f2YKK9b-lANv7CdhmQWbBq3eF4KPvI4c-he9kyfI9nEewEqioXKQ-kKJBFRJFGfmppH1_aLMowINAVfP0upf8RkbkkbYn7E6XzEPdkmmFxmfy052poag5-48lBb0rsI18P0tQUT9a-GinT1OtvG1jcVhZvK-IIlyZLzFxP9Ecv5bGwp0eEPExYtoxRyn7xHh28MM4908cbVmc9D3dZW7JufQ0L6E8Unjo6hZxc_2rnpqKX8YPYnrckJ1__v2TK2hJCBjBDqYUjxDJAttkbZlmmq39lTJMxXqiI-MYtsnb0hXqI0huKBgdGr_fuF0vc2TgBFq2gwdd8xFT2OfZVM68W_PORW7yNNPeMscrpbSI49RLMvNWmzTKNsIQx8UlXwBUKCxTUPXwnxk06aLqpBGdRq5em3jIfwb4n9kRcE2Jghl1I-wx68EOV5-oGeVG7VLGETf8fX9nNp1qBSclYx1ZppeCrR2wWR92_qpVe6T4JbzmMwrYdmWKoDGvsXZhqC3asRs2vu2veWZFP8IOlxR6BeTrxcmTVq2B65Z3rwliFGTBrMGBawyMuhoYA_eBNlO0dZuC-0XNKg-HHMTTdDXmQc2bpVfhiP31gTOau2e6KLkm3Zf1Y_uJgKKgCmJU1HDL92VuIUkUmz9pHuCv6eMNiJW2v0gLD_NaRS0NHP6CuwOJxgzYetcgIbZaQTg0v-lfkbmA; _dc_gtm_UA-174237991-1=1; _ga=GA1.2.191314830.1719310326; _ga_N9ZBHQ0R9X=GS1.1.1723189964.3.1.1723190107.45.0.0',
+#         'origin': 'https://www.booking.ir',
+#         'priority': 'u=1, i',
+#         'referer': 'https://www.booking.ir/sign-in/',
+#         'sec-ch-ua': '"Not)A;Brand";v="99", "Google Chrome";v="127", "Chromium";v="127"',
+#         'sec-ch-ua-mobile': '?0',
+#         'sec-ch-ua-platform': '"Windows"',
+#         'sec-fetch-dest': 'empty',
+#         'sec-fetch-mode': 'cors',
+#         'sec-fetch-site': 'same-origin',
+#         'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36',
+#         'x-requested-with': 'XMLHttpRequest',
+#     }
+#
+#     data = {
+#         'mobile': '09153148721',
+#         'password': '@MST8451030yf',
+#         'countryCode': 'IR',
+#         'g-recaptcha-response':'03AFcWeA7MtvAispnmY6sIcjIwpxRDN2H5yw3kmtaObON4gwgFXT33l8IiGZYjyJPXvweoyJXQXKYtiGs6yMnxMiER_9LVY5l4nVi9lnQ2AL-ceng5uBiii3SFe4gHbpY9DqMyg5odbRPjo8jwKNOFbWSoA8Xncp5ATZ7ODcKQU2jlfO59GfgGPf3BsWqLB9GD4psVeMIu8yVAQhWC03o09duF8_zBSHAMoHmmcQkUS9YSfEAknI5oRBeGeICEoRSYXzQgUP3kdwhSxJpL6Aendwlp1lydG6BHQnK_5RVhAd6w76tBJxYtGMOQknXN3DhnYgMEcadAIx2J7d57kpk9iPhkLYOXNzfKMUFVNmcHwpI-vJ01_MkSUeDbYRe0W7dA5MQ9e-tOxrgNQph_WpBZiRmQpOLbRM4gA97-OPVhSJ0azK4y505_dWpeMLfkoUMcRdRJVE9o78pzgi-oNmJfMHxyfcfUvHfSE6_lZl5zM7_N16s_0wQsMh_k_SOTNGW4KzSGFFxr_PL2A57DdJ9WAZeB9faf-Vd_CWHG91jqvf2tJZddSXD5S-aKInQx51qvx8_yBWgMIpLxTJGtgildYNEVkybTKxNHfNJDpeiFb8WP4aUKRc6l-Pt-IPkRAyqy0JPF6Iu7FkfZ5347-wl8vMqCXXXi9aPeca_ZTeE7bU9-FGl-TOClxJAJFka7J7a3CxHtPtlQTtJBcwjqwmmd8EskttNZRxZiwBuVfcwDND9xV_1koyG02lDuuGVkGFwiZ5veOEAC_klK-HY9iJHSOTuTcTeaW-H9gUBdmfEVcuzaEuayVxNy-YkUH8wNwfVXsWYqG0wcerxMdCHuezvjwJD99Wf90nNGsg'
+#     }
+#
+#     # req = requests.post('https://www.booking.ir/fa/v2/signinbymobile/', headers=headers, data=data)
+#     req = executeRequest(method='post',url='https://www.booking.ir/fa/v2/signinbymobile/', headers=headers, data=data,
+#                          priorityTimestamp=self.priorityTimestamp)
+#     # req = req.json()
+#     req = json.loads(req)
+#
+#     influx.capture_logs(1, 'Booking')
+#
+#
+#     cookies = [f"{key}={value}" for key, value in req['cookies'].items()]
+#
+#     headers['Cookie'] = '; '.join(cookies)
+#
+#     # req = requests.get( "https://www.booking.ir/account/getcompanies/", headers=headers)
+#     req = executeRequest(method='get',url='https://www.booking.ir/account/getcompanies/', headers=headers)
+#     req = req.json()
+#
+#     influx.capture_logs(1, 'Booking')
+#
+#
+#     data = json.loads(req['text'])
+#
+#     company_id = data['model'][0]['id']
+#
+#     data = F"id={company_id}"
+#
+#     # req = requests.post("https://www.booking.ir/account/signinbycompany/", headers=headers, data=data)
+#     req = executeRequest(method='post',url='https://www.booking.ir/account/signinbycompany/', headers=headers,data=data)
+#     req = req.json()
+#
+#     influx.capture_logs(1, 'Booking')
+#     return req['cookies']
 
 def load_cookies():
     if os.path.exists('Booking_hotel_cookies.json'):
@@ -292,7 +294,7 @@ def extract_session_id(response_text):
 
 from datetime import datetime,timedelta
 class Booking:
-    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[],forInfo=0):
+    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[],priorityTimestamp=1,forInfo=0):
         self.target = target
         self.start_date = start_date
         self.end_date = end_date
@@ -305,7 +307,7 @@ class Booking:
 
         self.hotelstarAnalysis=hotelstarAnalysis
 
-
+        self.priorityTimestamp=priorityTimestamp
 
         self.executor = ThreadPoolExecutor(max_workers=50)
         self.url = f"https://www.booking.ir/fa/hotel/iran/{target.lower()}/?i={self.start_date}&o={self.end_date}&r=1;&n=ir&d=1640809&lt=1&dt=2&a=2&c=0#/"
@@ -366,16 +368,30 @@ class Booking:
             cookies_string = "; ".join([f"{cookie['name']}={cookie['value']}" for cookie in self.cookies_dict])
 
             self.headers['Cookie']= cookies_string
-            # req = requests.get(self.url, headers=headers)
-            req = executeRequest(method='get', url=self.url, headers=self.headers)
-            req = req.json()
+
+            #
+            # try:
+            #     req = requests.get(self.url, headers=self.headers)
+            # except:
+            #     time.sleep(1)
+            #     continue
+
+
+            req = executeRequest(method='get', url=self.url, headers=self.headers,
+                                 priorityTimestamp=self.priorityTimestamp)
+            # req = req.json()
+            req = json.loads(req)
+
+
+
+
             influx.capture_logs(1, 'Booking')
             if req['status_code'] != 200:
                 print(f'Booking Error cookie --- Status_Code: {req["status_code"]}')
                 # cookies_dict = renew_and_save_cookies()  # Renew cookies
             else:
                 break
-        self.static_session_id = extract_session_id(req['text']).split(',')[0]
+        self.static_session_id = extract_session_id(req["text"]).split(',')[0]
 
 
     def get_hotels_info_writeJson(self):
@@ -403,17 +419,20 @@ class Booking:
             ]
         }
 
-        # req = requests.post(url, json=body, headers=headers)
-        req = executeRequest(method='post', url=url,json_data=body, headers=self.headers)
+        req = requests.post(url, json=body, headers=self.headers,)
+        # req = executeRequest(method='post', url=url,json_data=body, headers=self.headers,
+        #                      priorityTimestamp=self.priorityTimestamp)
         req = req.json()
+        # req=json.loads(req)
+
 
         influx.capture_logs(1, 'Booking')
-        if req['status_code'] != 200:
+        if req.status_code != 200:
             self.get_hotels_info_writeJson()
 
         #--------- parse ---
 
-        req_json=json.loads(req['text'])
+        req_json=json.loads(req.text)
         hotels = req_json['model']['hotelBookingItineraries']
         lst_hotel_info=[]
         for htl in hotels:
@@ -458,8 +477,12 @@ class Booking:
         }
 
         # req = requests.post(url, json=body, headers=self.header)
-        req = executeRequest(method='post', url=url,json_data=body, headers=self.headers)
-        req = req.json()
+        req = executeRequest(method='post', url=url,json_data=body,
+                             headers=self.headers,priorityTimestamp=self.priorityTimestamp)
+        # req = req.json()
+        req = json.loads(req)
+
+
         influx.capture_logs(1, 'Booking')
 
         if req['status_code'] == 200:
@@ -562,12 +585,13 @@ def booking_hotels():
 
     hotelstarAnalysis=request.args.get('hotelstarAnalysis')
     hotelstarAnalysis=json.loads(hotelstarAnalysis)
+    priorityTimestamp = request.args.get('priorityTimestamp')
 
 
     if not start_date or not end_date:
         return jsonify({"error": "Missing start_date or end_date"}), 400
 
-    book = Booking(destination, start_date, end_date, adults,isAnalysis,hotelstarAnalysis)
+    book = Booking(destination, start_date, end_date, adults,isAnalysis,hotelstarAnalysis,priorityTimestamp)
     future = executor.submit(book.get_result,)
     result = future.result()
     # Optionally, you can return a response immediately

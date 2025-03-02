@@ -32,10 +32,23 @@ def process_requests():
 
         # print(f"Executing Task {task.task_id} (Priority: {priority})")
         future = executor.submit(task.execute)  # Assign task to a worker thread
-        result = future.result()
 
-        if result:
-            task.future.set_result(result)  # Store response in future
+        try:
+            result = future.result()
+            if result:
+                task.future.set_result(result)  # Store response in future
+        except:
+            # task.future.set_exception(ValueError("No valid response received"))
+            # Create an empty response object
+            empty_response = requests.Response()
+
+            # Set attributes to simulate an empty response
+            empty_response._content = b''  # Empty content
+            empty_response.status_code = 204  # No Content status code
+            empty_response.headers = {}  # Empty headers
+
+            # self.future.set_exception(ValueError("No valid response received"))
+            task.future.set_result(empty_response)
 
 
         # print(f"Completed Task {task.task_id}: {result}")
@@ -58,17 +71,47 @@ class ExeRequest:
         self.future = Future()  # Future object to store result
 
     def execute(self):
-        if self.method == "get":
-            response = requests.get(self.url, params=self.params, cookies=self.cookies, headers=self.headers,
-                                    data=self.data, json=self.json)
-        elif self.method == "post":
-            response = requests.post(self.url, params=self.params, cookies=self.cookies, headers=self.headers,
-                                     data=self.data, json=self.json)
-        else:
-            response = None
-            # raise ValueError(f"Unsupported HTTP method: {self.method}")
+        numTries=2
+        response = None
+        while(True):
+            try:
+                if self.method == "get":
+                    response = requests.get(self.url, params=self.params, cookies=self.cookies, headers=self.headers,
+                                            data=self.data, json=self.json)
+                elif self.method == "post":
+                    response = requests.post(self.url, params=self.params, cookies=self.cookies, headers=self.headers,
+                                             data=self.data, json=self.json)
+                else:
+                    response = None
+                    # raise ValueError(f"Unsupported HTTP method: {self.method}")
+                break
+            except:
+                numTries=numTries-1
+                if (numTries == 0):
+                    response = None
+                    break
+                continue
 
-        self.future.set_result(response)  # Store result in Future
+
+        # If response is None (e.g., unsupported method), set an exception
+        if response is None:
+
+            # Create an empty response object
+            empty_response = requests.Response()
+
+            # Set attributes to simulate an empty response
+            empty_response._content = b''  # Empty content
+            empty_response.status_code = 204  # No Content status code
+            empty_response.headers = {}  # Empty headers
+
+            # self.future.set_exception(ValueError("No valid response received"))
+            self.future.set_result(empty_response)
+
+        else:
+            # Otherwise, set the result in the Future
+            self.future.set_result(response)
+
+        # self.future.set_result(response)  # Store result in Future
         # return response  # Return the response object
 
 
@@ -92,31 +135,46 @@ def remoteRequest():
     print(f'Get address with priority== {priority}')
 
     exeRequest = ExeRequest(method, url, params, cookies, headers, data, json_data)
+    maxTries=3
+    while(True):
 
-    with condition:
-        count = next(task_counter)  # Get a unique counter value
-        task_queue.put((priority, count, exeRequest))  # Store priority, counter, and request
+        if (maxTries<=0):
+            print('FAIIILLEEDDDDD.....')
+            return jsonify({
+                'status_code': '500',
+                'text': [],
+                'cookies': []
+            })
 
-        # task_queue.put((priority, exeRequest))  # Add task with priority
-        condition.notify()  # Wake up a worker thread
+        with condition:
+            count = next(task_counter)  # Get a unique counter value
+            task_queue.put((priority, count, exeRequest))  # Store priority, counter, and request
 
-    print(f"Queued Task ??? with Priority {priority}")
+            # task_queue.put((priority, exeRequest))  # Add task with priority
+            condition.notify()  # Wake up a worker thread
+
+        print(f"Queued Task ??? with Priority {priority}")
 
 
-    # Wait for task execution and return the result
-    result = exeRequest.future.result()  # Wait until the task is completed
 
-    # Extract the status code, text, and cookies
-    status_code = result.status_code
-    text = result.text
-    cookies = result.cookies.get_dict()  # Convert cookies to a dictionary for easy access
+        try:
+            # Wait for task execution and return the result
+            result = exeRequest.future.result()  # Wait until the task is completed
+            # Extract the status code, text, and cookies
+            status_code = result.status_code
+            text = result.text
+            cookies = result.cookies.get_dict()  # Convert cookies to a dictionary for easy access
+        except:
+            maxTries=maxTries-1
+            continue
 
-    # Return the information as JSON
-    return jsonify({
-        'status_code': status_code,
-        'text': text,
-        'cookies': cookies
-    })
+        # Return the information as JSON
+        return jsonify({
+            'status_code': status_code,
+            'text': text,
+            'cookies': cookies
+        })
+        break
 
 
 
