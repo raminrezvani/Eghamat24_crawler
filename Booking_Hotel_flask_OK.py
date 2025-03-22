@@ -294,7 +294,7 @@ def extract_session_id(response_text):
 
 from datetime import datetime,timedelta
 class Booking:
-    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[],priorityTimestamp=1,forInfo=0):
+    def __init__(self, target, start_date, end_date, adults,isAnalysiss,hotelstarAnalysis=[],priorityTimestamp=1,use_cache=True,forInfo=0):
         self.target = target
         self.start_date = start_date
         self.end_date = end_date
@@ -308,6 +308,8 @@ class Booking:
         self.hotelstarAnalysis=hotelstarAnalysis
 
         self.priorityTimestamp=priorityTimestamp
+        self.use_cache=use_cache
+
 
         self.executor = ThreadPoolExecutor(max_workers=50)
         self.url = f"https://www.booking.ir/fa/hotel/iran/{target.lower()}/?i={self.start_date}&o={self.end_date}&r=1;&n=ir&d=1640809&lt=1&dt=2&a=2&c=0#/"
@@ -363,6 +365,7 @@ class Booking:
 
 
     def get_sessionID(self):
+        force=0
         while True:
             # cookies_string = '; '.join([f'{name}={value}' for name, value in cookies_dict.items()])
             cookies_string = "; ".join([f"{cookie['name']}={cookie['value']}" for cookie in self.cookies_dict])
@@ -378,7 +381,9 @@ class Booking:
 
 
             req = executeRequest(method='get', url=self.url, headers=self.headers,
-                                 priorityTimestamp=self.priorityTimestamp)
+                                 priorityTimestamp=self.priorityTimestamp,
+                                 use_cache=self.use_cache,
+                                 forceGet=force)
             # req = req.json()
             req = json.loads(req)
 
@@ -388,6 +393,9 @@ class Booking:
             influx.capture_logs(1, 'Booking')
             if req['status_code'] != 200:
                 print(f'Booking Error cookie --- Status_Code: {req["status_code"]}')
+
+                force=1
+
                 # cookies_dict = renew_and_save_cookies()  # Renew cookies
             else:
                 break
@@ -478,7 +486,9 @@ class Booking:
 
         # req = requests.post(url, json=body, headers=self.header)
         req = executeRequest(method='post', url=url,json_data=body,
-                             headers=self.headers,priorityTimestamp=self.priorityTimestamp)
+                             headers=self.headers,
+                             priorityTimestamp=self.priorityTimestamp,
+                             use_cache=self.use_cache)
         # req = req.json()
         req = json.loads(req)
 
@@ -586,12 +596,13 @@ def booking_hotels():
     hotelstarAnalysis=request.args.get('hotelstarAnalysis')
     hotelstarAnalysis=json.loads(hotelstarAnalysis)
     priorityTimestamp = request.args.get('priorityTimestamp')
+    use_cache=request.args.get('use_cache')
 
 
     if not start_date or not end_date:
         return jsonify({"error": "Missing start_date or end_date"}), 400
 
-    book = Booking(destination, start_date, end_date, adults,isAnalysis,hotelstarAnalysis,priorityTimestamp)
+    book = Booking(destination, start_date, end_date, adults,isAnalysis,hotelstarAnalysis,priorityTimestamp,use_cache)
     future = executor.submit(book.get_result,)
     result = future.result()
     # Optionally, you can return a response immediately

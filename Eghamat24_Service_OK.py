@@ -13,7 +13,8 @@ app = Flask(__name__)
 executor = ThreadPoolExecutor(max_workers=100)
 # executor = ThreadPoolExecutor(max_workers=1)
 class Eghamat24:
-    def __init__(self, target='MHD', startdate='2024-10-16', stay='3',isAnalysiss=False,hotelstarAnalysis=[],priorityTimestamp=1):
+    def __init__(self, target='MHD', startdate='2024-10-16', stay='3',isAnalysiss=False,hotelstarAnalysis=[],priorityTimestamp=1,
+                 use_cache=0):
         self.target = target
         self.startdate = startdate
         self.stay = stay
@@ -23,7 +24,7 @@ class Eghamat24:
 
         self.hotelstarAnalysis=hotelstarAnalysis
         self.priorityTimestamp=priorityTimestamp
-
+        self.use_cache=use_cache
         # self.executor = ThreadPoolExecutor(max_workers=100)
         self.hotelResults = list()
 
@@ -138,9 +139,9 @@ def fetch_hotels():
     hotelstarAnalysis=request.args.get('hotelstarAnalysis')
     hotelstarAnalysis=json.loads(hotelstarAnalysis)
     priorityTimestamp = request.args.get('priorityTimestamp')
+    use_cache = request.args.get('use_cache')
 
-
-    eghamat = Eghamat24(target, startdate, stay,isAnalysis,hotelstarAnalysis,priorityTimestamp)
+    eghamat = Eghamat24(target, startdate, stay,isAnalysis,hotelstarAnalysis,priorityTimestamp,use_cache)
     eghamat.get_data()
     results = eghamat.get_hotelResults()
     return jsonify(results)

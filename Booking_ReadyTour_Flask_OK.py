@@ -9,7 +9,7 @@ from threading import Thread
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 import time
-
+import traceback
 #===============
 # create cookie priodically
 # ========= With selenium ========
@@ -262,13 +262,14 @@ def get_booking_tours(source,target,start_date, night_count,adults):
         sessionID = extract_session_id(req.text)
         res1 = requests.get(f'https://www.booking.ir/v2/trip/searchpackage/?sessionid={sessionID}', headers=headers)
         json_res1 = res1.json()
-        price = json_res1['model']['hotelBookingSearchResult']['hotelBookingItineraries'][2]['bestPackage']['totalPrice']
+        # price = json_res1['model']['hotelBookingSearchResult']['hotelBookingItineraries'][2]['bestPackage']['totalPrice']
 
         print('Finished')
         # results=parse_results(json_res1)
         return json_res1
 
     except Exception as e:
+        traceback.print_exc()
         print(f'An error occurred: {e}')
 
 def load_cookies():

@@ -90,16 +90,17 @@ def get_rooms():
     start_date = request.args.get('start_date')
     stay = request.args.get('stay')
     priorityTimestamp = request.args.get('priorityTimestamp')
+    use_cache=request.args.get('use_cache')
 
 
     # Run request in a separate thread
-    future = executor.submit(fetch_room_data, hotelCod, start_date, stay,priorityTimestamp)
+    future = executor.submit(fetch_room_data, hotelCod, start_date, stay,priorityTimestamp,use_cache)
     result = future.result()  # Wait for the thread to finish and get the result
 
     return jsonify(result)
 import time
 # Function to handle fetching room data
-def fetch_room_data(hotelCod, start_date, stay,priorityTimestamp):
+def fetch_room_data(hotelCod, start_date, stay,priorityTimestamp,use_cache):
 
     while(True):
         try:
@@ -138,7 +139,8 @@ def fetch_room_data(hotelCod, start_date, stay,priorityTimestamp):
                 cookies=cookies_dict,
                 headers=request_headers,
                 data=data,
-                priorityTimestamp=priorityTimestamp
+                priorityTimestamp=priorityTimestamp,
+                use_cache=use_cache
 
             )
             # response=response.json()

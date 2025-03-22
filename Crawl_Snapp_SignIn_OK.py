@@ -42,7 +42,9 @@ def fetch_hotel_data(city_id, date_from, date_to, page):
             # response = requests.get('https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params, headers=headers)
 
             response = executeRequest(method='get',url='https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params,
-                                    headers=headers)
+                                    headers=headers,
+                                      use_cache=0 #new retrieval
+                                      )
 
 
             # response = response.json()
@@ -59,7 +61,7 @@ def fetch_hotel_data(city_id, date_from, date_to, page):
             # time.sleep(2)
 
 # Function to get room data for a specific hotel
-def fetch_room_data(hotelID, date_from, date_to,priorityTimestamp):
+def fetch_room_data(hotelID, date_from, date_to,priorityTimestamp,use_cache):
     headers = {
         'Accept': '*/*',
         'Accept-Language': 'en-US,en;q=0.9',
@@ -76,12 +78,15 @@ def fetch_room_data(hotelID, date_from, date_to,priorityTimestamp):
         'hotel_id': hotelID,
         'page': '1',
     }
+    force=0
     while True:
         try:
             # response = requests.get('https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params, headers=headers)
             response = executeRequest(method='get',url='https://business2.snapptrip.com/service2/hotelbooking/hotels', params=params,
                                     headers=headers,
-                                    priorityTimestamp=priorityTimestamp)
+                                    priorityTimestamp=priorityTimestamp,
+                                      use_cache=use_cache,
+                                      forceGet=force)
             # response=response.json()
             response = json.loads(response)
 
@@ -90,6 +95,7 @@ def fetch_room_data(hotelID, date_from, date_to,priorityTimestamp):
             return json.loads(response['text'])
         except:
             print(f'Retrying room data for hotel {hotelID}...')
+            force=1
             # time.sleep(2)
 
 cityIDs={
@@ -140,7 +146,7 @@ def get_hotel_rooms():
     hotelstarAnalysis=request.args.get('hotelstarAnalysis')
     hotelstarAnalysis=json.loads(hotelstarAnalysis)
     priorityTimestamp = request.args.get('priorityTimestamp')
-
+    use_cache=request.args.get('use_cache')
 
 
     lst_hotels = []
@@ -162,7 +168,7 @@ def get_hotel_rooms():
     # #------------------------
 
     # Step 2: Fetch room data in parallel
-    room_futures = {executor_room.submit(fetch_room_data, htl['hotel_id'], date_from, date_to,priorityTimestamp): htl for htl in
+    room_futures = {executor_room.submit(fetch_room_data, htl['hotel_id'], date_from, date_to,priorityTimestamp,use_cache): htl for htl in
                     hotel_data_results}
 
     for future in as_completed(room_futures):
