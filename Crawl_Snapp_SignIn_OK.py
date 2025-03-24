@@ -94,6 +94,9 @@ def fetch_room_data(hotelID, date_from, date_to,priorityTimestamp,use_cache):
             influx.capture_logs(1, 'Snapp')
             return json.loads(response['text'])
         except:
+            if (force==1):
+                return {}
+
             print(f'Retrying room data for hotel {hotelID}...')
             force=1
             # time.sleep(2)

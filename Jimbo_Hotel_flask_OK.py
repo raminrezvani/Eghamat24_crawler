@@ -353,8 +353,7 @@ class Jimbo:
         }
         #---- Load cookies
         self.cookies_dict = load_cookies()
-        #--- Load SessionID
-        self.get_sessionID()
+
 
         if (forInfo==0):
             #---- Load hotels info from Json
@@ -362,22 +361,69 @@ class Jimbo:
                 a=f.read()
                 self.hotels=json.loads(a)
 
-
+        #--- Load SessionID
+        self.get_sessionID()
     def get_sessionID(self):
-        force = 0
+        force = 1
+        sess=requests.session()
         while True:
             # cookies_string = '; '.join([f'{name}={value}' for name, value in cookies_dict.items()])
             cookies_string = "; ".join([f"{cookie['name']}={cookie['value']}" for cookie in self.cookies_dict])
 
             self.headers['Cookie']= cookies_string
 
+            #---------------
             # try:
-            #     req = requests.get(self.url, headers=self.headers)
+            #     req = sess.get(self.url, headers=self.headers)
             # except:
             #     time.sleep(1)
             #     continue
+            #
+            # self.static_session_id = extract_session_id(req.text).split(',')[0]
+
+            # #=--------- new Approach ----
+            # sessionID_kol=extract_session_id(req.text).split(',')[0]
+            # for htl in self.hotels:
+            #     url_htl=f'https://www.jimbo.ir/fa/hotel/iran/
+            #     %DA%A9%DB%8C%D8%B4/%D9%87%D8%AA%D9%84-%D9%BE%D8%A7%D9%86%DB%8C%D8%B0-%DA%A9%DB%8C%D8%B4/
+            #     ?i=2025-04-07&o=2025-04-10&r=1&n=ir&d=2115449&a=2&c=0&
+            #     si=73c52868921946369c4e9458cc278397#    # sessionID_kol
+            #     /shouldSelectPackage'
+            # #----------------
+
+            url = f'https://www.jimbo.ir/v3/hotelbooking/search/'
+
+            body = {
+                "isStaticPage": False,
+                "checkIn": f"{self.start_date}T00:00:00",
+                "checkOut": f"{self.end_date}T00:00:00",
+                "systemType": None,
+                "room": 1,
+                "nationality": "IR",
+                "sessionId": self.static_session_id,
+                # "sessionId": "c96f2b5a164f415e8f27fd3a6cdd3cc9",
+                "destinations": {
+                    "id": "1641375"
+                },
+                "occupancies": [
+                    {
+                        "adult": self.adults,
+                        "childs": 0,
+                        "ages": []
+                    }
+                ]
+            }
+            # req = sess.post(url, json=body, headers=self.headers)
+            #
+            # self.static_session_id = extract_session_id(req.text).split(',')[0]
 
 
+            #----------
+
+            # self.static_session_id = extract_session_id(req.text).split(',')[0]
+            # break
+            #-------------
+        #
             req = executeRequest(method='get', url=self.url, headers=self.headers,
                                  priorityTimestamp=self.priorityTimestamp,
                                  use_cache=self.use_cache,forceGet=force
@@ -466,6 +512,7 @@ class Jimbo:
             "room": 1,
             "nationality": "IR",
             "sessionId": self.static_session_id,
+            # "sessionId": "7bf68ee7353347bba9f688dd9c63167a",
             "destinations": {
                 "id": data['hotelId']
             },
@@ -478,7 +525,7 @@ class Jimbo:
             ]
         }
 
-        # req = requests.post(url, json=body, headers=self.header)
+        # req = requests.post(url, json=body, headers=self.headers)
         req = executeRequest(method='post', url=url,json_data=body, headers=self.headers,
                              priorityTimestamp=self.priorityTimestamp,
                              use_cache=self.use_cache)
@@ -488,21 +535,24 @@ class Jimbo:
 
         influx.capture_logs(1, 'Jimboo')
 
-        if req['status_code'] == 200:
-            data = json.loads(req['text'])
-            return [
-                {
-                    "price": convert_to_tooman(room['totalPrice']),
-                    "name": room['rooms'][0]['roomTypeTitle'],
-                    'capacity':room['rooms'][0]['adultCount'],
-                    "provider": "Jimboo",
-                    "buy_link": "https://jimbo.ir/"
-                }
-                for room in data['model']['hotelBookingItineraries'][0]['packages']
-                # if room.get('nonRefundable') is not None
-            ]
+        try:
+            if req['status_code'] == 200:
+                data = json.loads(req['text'])
+                return [
+                    {
+                        "price": convert_to_tooman(room['totalPrice']),
+                        "name": room['rooms'][0]['roomTypeTitle'],
+                        'capacity':room['rooms'][0]['adultCount'],
+                        "provider": "Jimboo",
+                        "buy_link": "https://jimbo.ir/"
+                    }
+                    for room in data['model']['hotelBookingItineraries'][0]['packages']
+                    # if room.get('nonRefundable') is not None
+                ]
 
-        else:
+            else:
+                return None
+        except:
             return None
 
     def get_result(self):
@@ -525,10 +575,15 @@ class Jimbo:
             print('Jimboo RASII')
 
         #-------------------
+
+        # for hotel in self.hotels:
+        #     hotel_handler(hotel)
+
         # self.executor.map(hotel_handler, hotels)
         future = [self.executor.submit(hotel_handler, hotel) for hotel in self.hotels]
 
         wait(future)
+        # results = [f.result() for f in future]  # This will wait and get results
 
         return result
 
