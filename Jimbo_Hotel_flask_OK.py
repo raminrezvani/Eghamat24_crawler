@@ -21,6 +21,10 @@ from threading import Thread
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 from insert_influx import Influxdb
 influx = Influxdb()
+import redis
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
+
 
 Dic_mapping_destination={
             'KIH':'1640809',
@@ -432,7 +436,7 @@ class Jimbo:
             req = json.loads(req)
 
 
-            influx.capture_logs(1, 'Jimboo')
+            # influx.capture_logs(1, 'Jimboo')
             if req['status_code'] != 200:
                 print(f'Jimbo Error cookie --- Status_Code: {req["status_code"]}')
                 force = 1
@@ -474,7 +478,7 @@ class Jimbo:
         # req=json.loads(req)
 
 
-        influx.capture_logs(1, 'Jimboo')
+        # influx.capture_logs(1, 'Jimboo')
         if req.status_code != 200:
             self.get_hotels_info_writeJson()
 
@@ -533,7 +537,7 @@ class Jimbo:
         req = json.loads(req)
 
 
-        influx.capture_logs(1, 'Jimboo')
+        # influx.capture_logs(1, 'Jimboo')
 
         try:
             if req['status_code'] == 200:
@@ -567,20 +571,61 @@ class Jimbo:
                 "rooms": self.get_room_data(hotel)
             })
 
-        #---------- Check for 5-Star hotels
-        if self.isAnalysis=='1':
-            hotels=[htl for htl in self.hotels if str(int(htl['star'])) in self.hotelstarAnalysis]
-            print('Jimboo Analysis')
-        else:
-            print('Jimboo RASII')
 
-        #-------------------
+
+        Selecthotels=[]
+        #======== Check for hotel names or star ratings
+        if self.isAnalysis!='0':
+            # Create a set of all hotel names for faster lookup
+            all_hotel_names = {hotel['hotel_name'] for hotel in self.hotels}
+            selected_hotels = set()  # Using set to avoid duplicates
+
+            # Check Redis for hotel name mappings
+            for hotel_star in self.hotelstarAnalysis:
+                redis_key = f"asli_hotel:{hotel_star}"
+                redis_data = redis_client.get(redis_key)
+                if redis_data:
+                    mapped_hotels = json.loads(redis_data)
+                    # Add hotels that exist in our current hotels list
+                    selected_hotels.update(hotel for hotel in mapped_hotels if hotel in all_hotel_names)
+
+            if selected_hotels:
+                # If we found mapped hotels, filter the hotels list
+                Selecthotels = [hotel for hotel in self.hotels if hotel['hotel_name'] in selected_hotels]
+            else:
+                # Fallback to original star rating and name check
+                Selecthotels = [hotel for hotel in self.hotels
+                         if (str(hotel['star']) in self.hotelstarAnalysis)
+                         or (hotel['hotel_name'] in self.hotelstarAnalysis)]
+
+            print(f'Jimboo Analysis')
+        else:
+            print(f'Jimboo RASII')
+
+        #============
+
+
+
+        # #---------- Check for 5-Star hotels
+        # if self.isAnalysis=='1':
+        #     hotels=[htl for htl in self.hotels if str(int(htl['star'])) in self.hotelstarAnalysis]
+        #     print('Jimboo Analysis')
+        # else:
+        #     print('Jimboo RASII')
+        #
+        # #-------------------
 
         # for hotel in self.hotels:
         #     hotel_handler(hotel)
 
-        # self.executor.map(hotel_handler, hotels)
-        future = [self.executor.submit(hotel_handler, hotel) for hotel in self.hotels]
+        if len(Selecthotels)!=0:
+            future = [self.executor.submit(hotel_handler, hotel) for hotel in Selecthotels]
+        else:
+            future = [self.executor.submit(hotel_handler, hotel) for hotel in self.hotels]
+
+
+        # # self.executor.map(hotel_handler, hotels)
+        # future = [self.executor.submit(hotel_handler, hotel) for hotel in self.hotels]
 
         wait(future)
         # results = [f.result() for f in future]  # This will wait and get results
@@ -662,7 +707,8 @@ def Jimboo_hotels():
 import sys
 if __name__ == '__main__':
     # port=int(sys.argv[1]) # Get port from command line
-    app.run(debug=True,host='0.0.0.0',port=6060)
+    # app.run(debug=True,host='0.0.0.0',port=6060)
+    app.run(debug=True, host='0.0.0.0', port=3030)
     # app.run(host='0.0.0.0',port=5020)
     # app.run(host='0.0.0.0',port=port)
 

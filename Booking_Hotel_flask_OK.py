@@ -1,5 +1,8 @@
 import os
 
+import redis
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 
 os.system("title Booking Hotel Flask")
@@ -390,7 +393,7 @@ class Booking:
 
 
 
-            influx.capture_logs(1, 'Booking')
+            # influx.capture_logs(1, 'Booking')
             if req['status_code'] != 200:
                 print(f'Booking Error cookie --- Status_Code: {req["status_code"]}')
 
@@ -434,7 +437,7 @@ class Booking:
         # req=json.loads(req)
 
 
-        influx.capture_logs(1, 'Booking')
+        # influx.capture_logs(1, 'Booking')
         if req.status_code != 200:
             self.get_hotels_info_writeJson()
 
@@ -493,7 +496,7 @@ class Booking:
         req = json.loads(req)
 
 
-        influx.capture_logs(1, 'Booking')
+        # influx.capture_logs(1, 'Booking')
 
         if req['status_code'] == 200:
             data = json.loads(req['text'])
@@ -524,16 +527,54 @@ class Booking:
                 "rooms": self.get_room_data(hotel)
             })
 
-        #---------- Check for 5-Star hotels
-        if self.isAnalysis=='1':
-            hotels=[htl for htl in self.hotels if str(int(htl['star'])) in self.hotelstarAnalysis]
-            print('Booking Analysis')
-        else:
-            print('Booking RASII')
+        Selecthotels=[]
+        #======== Check for hotel names or star ratings
+        if self.isAnalysis!='0':
+            # Create a set of all hotel names for faster lookup
+            all_hotel_names = {hotel['hotel_name'] for hotel in self.hotels}
+            selected_hotels = set()  # Using set to avoid duplicates
 
-        #-------------------
+            # Check Redis for hotel name mappings
+            for hotel_star in self.hotelstarAnalysis:
+                redis_key = f"asli_hotel:{hotel_star}"
+                redis_data = redis_client.get(redis_key)
+                if redis_data:
+                    mapped_hotels = json.loads(redis_data)
+                    # Add hotels that exist in our current hotels list
+                    selected_hotels.update(hotel for hotel in mapped_hotels if hotel in all_hotel_names)
+
+            if selected_hotels:
+                # If we found mapped hotels, filter the hotels list
+                Selecthotels = [hotel for hotel in self.hotels if hotel['hotel_name'] in selected_hotels]
+            else:
+                # Fallback to original star rating and name check
+                Selecthotels = [hotel for hotel in self.hotels
+                         if (str(hotel['star']) in self.hotelstarAnalysis)
+                         or (hotel['hotel_name'] in self.hotelstarAnalysis)]
+
+            print(f'Booking Analysis')
+        else:
+            print(f'Booking RASII')
+
+        #============
+
+
+
+        # #---------- Check for 5-Star hotels
+        # if self.isAnalysis=='1':
+        #     hotels=[htl for htl in self.hotels if str(int(htl['star'])) in self.hotelstarAnalysis]
+        #     print('Booking Analysis')
+        # else:
+        #     print('Booking RASII')
+        #
+        # #-------------------
+
+
         # self.executor.map(hotel_handler, hotels)
-        future = [self.executor.submit(hotel_handler, hotel) for hotel in self.hotels]
+        if len(Selecthotels)!=0:
+            future = [self.executor.submit(hotel_handler, hotel) for hotel in Selecthotels]
+        else:
+            future = [self.executor.submit(hotel_handler, hotel) for hotel in self.hotels]
 
         wait(future)
 
@@ -612,7 +653,9 @@ def booking_hotels():
 import sys
 if __name__ == '__main__':
     # port=int(sys.argv[1]) # Get port from command line
-    app.run(debug=True,host='0.0.0.0',port=5040)
+    # app.run( threaded=False,host='0.0.0.0',port=5040)
+    app.run(threaded=False, host='0.0.0.0', port=3040)
+
     # app.run(host='0.0.0.0',port=port)
 
 

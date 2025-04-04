@@ -10,6 +10,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from insert_influx import Influxdb
 
 from Client_Dispatch_requests import executeRequest
+import redis
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 influx = Influxdb()
 app = Flask(__name__)
@@ -51,7 +54,7 @@ def fetch_hotel_data(city_id, date_from, date_to, page):
             response = json.loads(response)
 
 
-            influx.capture_logs(1, 'Snapp')
+            # influx.capture_logs(1, 'Snapp')
             return json.loads(response['text'])
         except:
             print(f'Retrying page {page}...')
@@ -91,7 +94,7 @@ def fetch_room_data(hotelID, date_from, date_to,priorityTimestamp,use_cache):
             response = json.loads(response)
 
 
-            influx.capture_logs(1, 'Snapp')
+            # influx.capture_logs(1, 'Snapp')
             return json.loads(response['text'])
         except:
             if (force==1):
@@ -162,13 +165,46 @@ def get_hotel_rooms():
     # lst_hotl=
     # for httt in hotel_data_results:
     #     if ()
-    # #---------- Check 5-Star of hotel
-    if (isAnalysis=='1'):
-        hotel_data_results=[htl for htl in hotel_data_results if str(htl['hotel_star']) in hotelstarAnalysis]
-        print('Snapp Analysis')
+
+    # ======== Check for hotel names or star ratings
+    if isAnalysis!='0':
+        # Create a set of all hotel names for faster lookup
+        all_hotel_names = {hotel['hotel_name'] for hotel in hotel_data_results}
+        selected_hotels = set()  # Using set to avoid duplicates
+
+        # Check Redis for hotel name mappings
+        for hotel_star in hotelstarAnalysis:
+            redis_key = f"asli_hotel:{hotel_star}"
+            redis_data = redis_client.get(redis_key)
+            if redis_data:
+                mapped_hotels = json.loads(redis_data)
+                # Add hotels that exist in our current hotels list
+                selected_hotels.update(hotel for hotel in mapped_hotels if hotel in all_hotel_names)
+
+        if selected_hotels:
+            # If we found mapped hotels, filter the hotels list
+            hotel_data_results = [hotel for hotel in hotel_data_results if hotel['hotel_name'] in selected_hotels]
+        else:
+            # Fallback to original star rating and name check
+            hotel_data_results = [hotel for hotel in hotel_data_results
+                      if (str(hotel['hotel_star']) in hotelstarAnalysis)
+                      or (hotel['hotel_name'] in hotelstarAnalysis)]
+
+        print(f'Snapp Analysis')
     else:
-        print('Snapp RASII')
-    # #------------------------
+        print(f'Snapp RASII')
+
+    # ============
+
+    # # #---------- Check 5-Star of hotel
+    # if (isAnalysis=='1'):
+    #     hotel_data_results=[htl for htl in hotel_data_results if str(htl['hotel_star']) in hotelstarAnalysis]
+    #     print('Snapp Analysis')
+    # else:
+    #     print('Snapp RASII')
+    # # #------------------------
+
+
 
     # Step 2: Fetch room data in parallel
     room_futures = {executor_room.submit(fetch_room_data, htl['hotel_id'], date_from, date_to,priorityTimestamp,use_cache): htl for htl in

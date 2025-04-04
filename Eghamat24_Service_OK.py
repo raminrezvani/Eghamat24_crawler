@@ -8,6 +8,9 @@ from concurrent.futures import ThreadPoolExecutor
 import requests
 from insert_influx import Influxdb
 influx = Influxdb()
+import redis
+
+redis_client = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
 
 app = Flask(__name__)
 executor = ThreadPoolExecutor(max_workers=100)
@@ -40,7 +43,7 @@ class Eghamat24:
         property_id = hotel['property_id']
         url = f'https://www.eghamat24.com/property-rooms/list-view?property_id={property_id}&check_in={self.startdate}&length_of_stay={self.stay}'
         res = requests.get(url).text
-        influx.capture_logs(1, 'Eghamat24')
+        # influx.capture_logs(1, 'Eghamat24')
         parser = etree.HTMLParser()
         htmlparsed = etree.parse(StringIO(res), parser=parser)
 
@@ -110,13 +113,47 @@ class Eghamat24:
         with open(f'eghamat_data/lstHotels_{self.target}_withProperty.json', 'r', encoding='utf-8') as file:
             lst_items_ok = json.load(file)
 
-        # #---------- Check 5-Star of hotel
-        if (self.isAnalysis == '1'):
-            lst_items_ok = [htl for htl in lst_items_ok if str(htl['star']) in self.hotelstarAnalysis]
-            print('Eghamat Analysis')
+
+
+
+        #======== Check for hotel names or star ratings
+        if self.isAnalysis!='0':
+            # Create a set of all hotel names for faster lookup
+            all_hotel_names = {hotel['title'] for hotel in lst_items_ok}
+            selected_hotels = set()  # Using set to avoid duplicates
+
+            # Check Redis for hotel name mappings
+            for hotel_star in self.hotelstarAnalysis:
+                redis_key = f"asli_hotel:{hotel_star}"
+                redis_data = redis_client.get(redis_key)
+                if redis_data:
+                    mapped_hotels = json.loads(redis_data)
+                    # Add hotels that exist in our current hotels list
+                    selected_hotels.update(hotel for hotel in mapped_hotels if hotel in all_hotel_names)
+
+            if selected_hotels:
+                # If we found mapped hotels, filter the hotels list
+                lst_items_ok = [hotel for hotel in lst_items_ok if hotel['title'] in selected_hotels]
+            else:
+                # Fallback to original star rating and name check
+                lst_items_ok = [hotel for hotel in lst_items_ok
+                         if (str(hotel['star']) in self.hotelstarAnalysis)
+                         or (hotel['title'] in self.hotelstarAnalysis)]
+
+            print(f'Eghamat Analysis')
         else:
-            print('Eghamat RASII')
-        # #------------------------
+            print(f'Eghamat RASII')
+
+        #============
+
+
+        # # #---------- Check 5-Star of hotel
+        # if (self.isAnalysis == '1'):
+        #     lst_items_ok = [htl for htl in lst_items_ok if str(htl['star']) in self.hotelstarAnalysis]
+        #     print('Eghamat Analysis')
+        # else:
+        #     print('Eghamat RASII')
+        # # #------------------------
 
 
         lst_thread = []
