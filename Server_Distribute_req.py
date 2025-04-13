@@ -124,9 +124,9 @@ def remoteRequest():
     params = json.loads(request.args.get('params', '{}'))  # Parse params as JSON
     cookies = json.loads(request.args.get('cookies', '{}'))  # Parse cookies as JSON
     headers = json.loads(request.args.get('headers', '{}'))  # Parse headers as JSON
-    method = request.args.get('method','GET')       # Convert to lowercase for consistency
-    data = json.loads(request.args.get('data', '{}')) if method == "post" else None  # Parse data if POST
-    json_data = json.loads(request.args.get('json', '{}')) if method == "post" else None  # Parse json if POST
+    method = request.args.get('method','GET').lower()        # Convert to lowercase for consistency
+    data = json.loads(request.args.get('data', '{}')) if method == "post" or method=="POST" else None  # Parse data if POST
+    json_data = json.loads(request.args.get('json', '{}')) if method == "post" or method=="POST" else None  # Parse json if POST
 
     print(f'AJABB =-----  {request.args.get("priorityTimestamp")}')
 

@@ -216,6 +216,12 @@ def get_hotel_rooms():
             json_data_room = future.result()
             if 'data' in json_data_room and json_data_room['data']:
                 rooms_data = json_data_room['data'][0].get('rooms', [])
+
+                #---
+                if 'ساسان' in htl['hotel_name']:
+                    print('hotel sasan!')
+                #----------
+
                 hotel = {
                     'hotel_name': htl['hotel_name'],
                     'hotel_star': htl['hotel_star'],
